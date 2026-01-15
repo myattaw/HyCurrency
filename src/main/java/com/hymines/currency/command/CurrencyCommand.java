@@ -12,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class CurrencyCommand extends AbstractAsyncCommand {
 
-    // currency <pay|balance|set|add|remove|list|reload|top> <currency> [args...]
     public CurrencyCommand(HyCurrencyPlugin plugin) {
         super("currency", "Manage currencies");
         this.addSubCommand(new CurrencyAddCommand(plugin));
@@ -21,12 +20,13 @@ public class CurrencyCommand extends AbstractAsyncCommand {
         this.addSubCommand(new CurrencySetCommand(plugin));
         this.addSubCommand(new CurrencyRemoveCommand(plugin));
         this.addSubCommand(new CurrencyTopCommand(plugin));
+        this.addSubCommand(new CurrencyListCommand(plugin));
     }
 
     @Nonnull
     @Override
     protected CompletableFuture<Void> executeAsync(@Nonnull CommandContext commandContext) {
-        commandContext.sendMessage(Message.raw("Usage: /currency <balance|pay|set|add|remove|top> [args...]"));
+        commandContext.sendMessage(Message.raw("Usage: /currency <balance|pay|set|add|remove|top|list> [args...]"));
         return CompletableFuture.completedFuture(null);
     }
 
