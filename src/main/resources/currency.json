@@ -1,0 +1,17 @@
+{
+  "currencies": {
+    "money": {
+      "name": "Money",
+      "symbol": "$",
+      "format": "%symbol%%amount%",
+      "leaderboard": true
+    },
+    "vote_points": {
+      "name": "Vote Points",
+      "symbol": "VP",
+      "format": "%amount% %symbol%",
+      "leaderboard": false
+    }
+  }
+}
+
