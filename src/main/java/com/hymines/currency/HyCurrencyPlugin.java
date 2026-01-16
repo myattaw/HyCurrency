@@ -13,7 +13,6 @@ import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +20,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class HyCurrencyPlugin extends JavaPlugin {
+
+    private static volatile HyCurrencyPlugin instance;
 
     private final Map<String, CurrencyModel> currencyDataMap = new ConcurrentHashMap<>();
     private ExecutorService dbExecutor;
@@ -33,6 +34,7 @@ public class HyCurrencyPlugin extends JavaPlugin {
 
     public HyCurrencyPlugin(@Nonnull JavaPluginInit init) {
         super(init);
+        instance = this;
     }
 
     @Override
@@ -60,6 +62,7 @@ public class HyCurrencyPlugin extends JavaPlugin {
                 dbExecutor.shutdownNow();
             }
         }
+        instance = null;
     }
 
     private void loadConfig() {
@@ -106,6 +109,10 @@ public class HyCurrencyPlugin extends JavaPlugin {
 
     public CurrencyManager getCurrencyManager() {
         return currencyManager;
+    }
+
+    public static HyCurrencyPlugin getInstance() {
+        return instance;
     }
 
 }
