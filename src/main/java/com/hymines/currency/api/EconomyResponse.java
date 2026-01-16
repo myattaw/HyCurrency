@@ -39,16 +39,30 @@ public class EconomyResponse {
      * @return The amount involved in the transaction
      */
     @Nonnull
-    public BigDecimal getAmount() {
+    public BigDecimal getAmountExact() {
         return amount;
+    }
+
+    /**
+     * @return The amount as a double
+     */
+    public double getAmount() {
+        return toSafeDouble(amount);
     }
 
     /**
      * @return The balance after the transaction (or current balance for queries)
      */
     @Nonnull
-    public BigDecimal getBalance() {
+    public BigDecimal getBalanceExact() {
         return balance;
+    }
+
+    /**
+     * @return The balance as a double
+     */
+    public double getBalance() {
+        return toSafeDouble(balance);
     }
 
     /**
@@ -64,6 +78,15 @@ public class EconomyResponse {
      */
     public boolean isSuccess() {
         return type == EconomyResponseType.SUCCESS;
+    }
+
+
+    private static double toSafeDouble(BigDecimal value) {
+        double d = value.doubleValue();
+        if (new BigDecimal(d).compareTo(value) > 0) {
+            d = Math.nextAfter(d, Double.NEGATIVE_INFINITY);
+        }
+        return d;
     }
 
     // Static factory methods for convenience

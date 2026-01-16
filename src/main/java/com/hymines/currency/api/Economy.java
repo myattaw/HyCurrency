@@ -24,7 +24,7 @@ public interface Economy {
     @Nonnull
     default String getDefaultCurrency() {
         return "money";
-    };
+    }
 
     /**
      * Checks if a currency exists.
@@ -54,6 +54,18 @@ public interface Economy {
     String format(@Nonnull BigDecimal amount, @Nonnull String currency);
 
     /**
+     * Formats an amount for display.
+     *
+     * @param amount   The amount to format as double
+     * @param currency The currency identifier
+     * @return The formatted amount string
+     */
+    @Nonnull
+    default String format(double amount, @Nonnull String currency) {
+        return format(BigDecimal.valueOf(amount), currency);
+    }
+
+    /**
      * Formats an amount using the default currency.
      *
      * @param amount The amount to format
@@ -61,6 +73,17 @@ public interface Economy {
      */
     @Nonnull
     default String format(@Nonnull BigDecimal amount) {
+        return format(amount, getDefaultCurrency());
+    }
+
+    /**
+     * Formats an amount using the default currency.
+     *
+     * @param amount The amount to format as double
+     * @return The formatted amount string
+     */
+    @Nonnull
+    default String format(double amount) {
         return format(amount, getDefaultCurrency());
     }
 
@@ -126,6 +149,19 @@ public interface Economy {
     EconomyResponse has(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Checks if an online player has at least the specified amount.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to check as double
+     * @return The response (SUCCESS if they have enough, INSUFFICIENT_FUNDS otherwise)
+     */
+    @Nonnull
+    default EconomyResponse has(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return has(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Checks if an online player has at least the specified amount using default currency.
      *
      * @param playerId The player's UUID
@@ -135,6 +171,18 @@ public interface Economy {
     @Nonnull
     default EconomyResponse has(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return has(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Checks if an online player has at least the specified amount using default currency.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to check as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse has(@Nonnull UUID playerId, double amount) {
+        return has(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -149,6 +197,19 @@ public interface Economy {
     EconomyResponse withdraw(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Withdraws an amount from an online player's balance.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to withdraw as double
+     * @return The response containing the new balance
+     */
+    @Nonnull
+    default EconomyResponse withdraw(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return withdraw(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Withdraws an amount from an online player using default currency.
      *
      * @param playerId The player's UUID
@@ -158,6 +219,18 @@ public interface Economy {
     @Nonnull
     default EconomyResponse withdraw(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return withdraw(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Withdraws an amount from an online player using default currency.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to withdraw as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse withdraw(@Nonnull UUID playerId, double amount) {
+        return withdraw(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -172,6 +245,19 @@ public interface Economy {
     EconomyResponse deposit(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Deposits an amount to an online player's balance.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to deposit as double
+     * @return The response containing the new balance
+     */
+    @Nonnull
+    default EconomyResponse deposit(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return deposit(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Deposits an amount to an online player using default currency.
      *
      * @param playerId The player's UUID
@@ -181,6 +267,18 @@ public interface Economy {
     @Nonnull
     default EconomyResponse deposit(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return deposit(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Deposits an amount to an online player using default currency.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to deposit as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse deposit(@Nonnull UUID playerId, double amount) {
+        return deposit(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -195,6 +293,19 @@ public interface Economy {
     EconomyResponse setBalance(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Sets an online player's balance to a specific amount.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The new balance as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse setBalance(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return setBalance(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Sets an online player's balance using default currency.
      *
      * @param playerId The player's UUID
@@ -204,6 +315,18 @@ public interface Economy {
     @Nonnull
     default EconomyResponse setBalance(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return setBalance(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Sets an online player's balance using default currency.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The new balance as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse setBalance(@Nonnull UUID playerId, double amount) {
+        return setBalance(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -239,6 +362,19 @@ public interface Economy {
     CompletableFuture<EconomyResponse> hasAsync(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Checks if any player has at least the specified amount asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to check as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> hasAsync(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return hasAsync(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Checks if any player has at least the specified amount using default currency.
      *
      * @param playerId The player's UUID
@@ -248,6 +384,18 @@ public interface Economy {
     @Nonnull
     default CompletableFuture<EconomyResponse> hasAsync(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return hasAsync(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Checks if any player has at least the specified amount using default currency.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to check as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> hasAsync(@Nonnull UUID playerId, double amount) {
+        return hasAsync(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -262,6 +410,19 @@ public interface Economy {
     CompletableFuture<EconomyResponse> withdrawAsync(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Withdraws an amount from any player's balance asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to withdraw as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> withdrawAsync(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return withdrawAsync(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Withdraws an amount from any player using default currency asynchronously.
      *
      * @param playerId The player's UUID
@@ -271,6 +432,18 @@ public interface Economy {
     @Nonnull
     default CompletableFuture<EconomyResponse> withdrawAsync(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return withdrawAsync(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Withdraws an amount from any player using default currency asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to withdraw as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> withdrawAsync(@Nonnull UUID playerId, double amount) {
+        return withdrawAsync(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -285,6 +458,19 @@ public interface Economy {
     CompletableFuture<EconomyResponse> depositAsync(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Deposits an amount to any player's balance asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to deposit as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> depositAsync(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return depositAsync(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Deposits an amount to any player using default currency asynchronously.
      *
      * @param playerId The player's UUID
@@ -294,6 +480,18 @@ public interface Economy {
     @Nonnull
     default CompletableFuture<EconomyResponse> depositAsync(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return depositAsync(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Deposits an amount to any player using default currency asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The amount to deposit as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> depositAsync(@Nonnull UUID playerId, double amount) {
+        return depositAsync(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -308,6 +506,19 @@ public interface Economy {
     CompletableFuture<EconomyResponse> setBalanceAsync(@Nonnull UUID playerId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Sets any player's balance to a specific amount asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param currency The currency identifier
+     * @param amount   The new balance as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> setBalanceAsync(@Nonnull UUID playerId, @Nonnull String currency, double amount) {
+        return setBalanceAsync(playerId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Sets any player's balance using default currency asynchronously.
      *
      * @param playerId The player's UUID
@@ -317,6 +528,18 @@ public interface Economy {
     @Nonnull
     default CompletableFuture<EconomyResponse> setBalanceAsync(@Nonnull UUID playerId, @Nonnull BigDecimal amount) {
         return setBalanceAsync(playerId, getDefaultCurrency(), amount);
+    }
+
+    /**
+     * Sets any player's balance using default currency asynchronously.
+     *
+     * @param playerId The player's UUID
+     * @param amount   The new balance as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> setBalanceAsync(@Nonnull UUID playerId, double amount) {
+        return setBalanceAsync(playerId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     /**
@@ -332,6 +555,20 @@ public interface Economy {
     EconomyResponse transfer(@Nonnull UUID fromId, @Nonnull UUID toId, @Nonnull String currency, @Nonnull BigDecimal amount);
 
     /**
+     * Transfers an amount between two online players synchronously.
+     *
+     * @param fromId   The source player's UUID
+     * @param toId     The destination player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to transfer as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse transfer(@Nonnull UUID fromId, @Nonnull UUID toId, @Nonnull String currency, double amount) {
+        return transfer(fromId, toId, currency, BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Transfers an amount between two online players using default currency.
      *
      * @param fromId The source player's UUID
@@ -345,6 +582,19 @@ public interface Economy {
     }
 
     /**
+     * Transfers an amount between two online players using default currency.
+     *
+     * @param fromId The source player's UUID
+     * @param toId   The destination player's UUID
+     * @param amount The amount to transfer as double
+     * @return The response
+     */
+    @Nonnull
+    default EconomyResponse transfer(@Nonnull UUID fromId, @Nonnull UUID toId, double amount) {
+        return transfer(fromId, toId, getDefaultCurrency(), BigDecimal.valueOf(amount));
+    }
+
+    /**
      * Transfers an amount between any two players asynchronously.
      *
      * @param fromId   The source player's UUID
@@ -355,7 +605,22 @@ public interface Economy {
      */
     @Nonnull
     CompletableFuture<EconomyResponse> transferAsync(@Nonnull UUID fromId, @Nonnull UUID toId,
-                                                      @Nonnull String currency, @Nonnull BigDecimal amount);
+                                                     @Nonnull String currency, @Nonnull BigDecimal amount);
+
+    /**
+     * Transfers an amount between any two players asynchronously.
+     *
+     * @param fromId   The source player's UUID
+     * @param toId     The destination player's UUID
+     * @param currency The currency identifier
+     * @param amount   The amount to transfer as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> transferAsync(@Nonnull UUID fromId, @Nonnull UUID toId,
+                                                             @Nonnull String currency, double amount) {
+        return transferAsync(fromId, toId, currency, BigDecimal.valueOf(amount));
+    }
 
     /**
      * Transfers an amount between any two players using default currency asynchronously.
@@ -370,4 +635,16 @@ public interface Economy {
         return transferAsync(fromId, toId, getDefaultCurrency(), amount);
     }
 
+    /**
+     * Transfers an amount between any two players using default currency asynchronously.
+     *
+     * @param fromId The source player's UUID
+     * @param toId   The destination player's UUID
+     * @param amount The amount to transfer as double
+     * @return CompletableFuture resolving to the response
+     */
+    @Nonnull
+    default CompletableFuture<EconomyResponse> transferAsync(@Nonnull UUID fromId, @Nonnull UUID toId, double amount) {
+        return transferAsync(fromId, toId, getDefaultCurrency(), BigDecimal.valueOf(amount));
+    }
 }
