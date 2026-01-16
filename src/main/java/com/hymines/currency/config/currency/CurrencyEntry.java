@@ -1,4 +1,4 @@
-package com.hymines.currency.config;
+package com.hymines.currency.config.currency;
 
 import java.math.BigDecimal;
 

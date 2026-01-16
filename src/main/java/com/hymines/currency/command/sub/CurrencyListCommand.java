@@ -1,8 +1,8 @@
 package com.hymines.currency.command.sub;
 
 import com.hymines.currency.HyCurrencyPlugin;
-import com.hymines.currency.config.CurrencyConfig;
-import com.hymines.currency.config.CurrencyEntry;
+import com.hymines.currency.config.currency.CurrencyConfig;
+import com.hymines.currency.config.currency.CurrencyEntry;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;

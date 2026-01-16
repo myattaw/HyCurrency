@@ -1,4 +1,4 @@
-package com.hymines.currency.config;
+package com.hymines.currency.config.currency;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

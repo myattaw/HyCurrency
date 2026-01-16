@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class CurrencyModel {
 
+    // Map of currency ID to amount
     private final Map<String, BigDecimal> currencies = new HashMap<>();
 
     public void addCurrency(String currency) {
@@ -31,6 +32,10 @@ public class CurrencyModel {
 
     public Map<String, BigDecimal> getCurrencies() {
         return Collections.unmodifiableMap(currencies);
+    }
+
+    public void removeCurrency(String currency) {
+        currencies.remove(currency);
     }
 
 }

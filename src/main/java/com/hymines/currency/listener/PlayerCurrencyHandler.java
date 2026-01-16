@@ -1,7 +1,7 @@
 package com.hymines.currency.listener;
 
 import com.hymines.currency.HyCurrencyPlugin;
-import com.hymines.currency.config.CurrencyConfig;
+import com.hymines.currency.config.currency.CurrencyConfig;
 import com.hymines.currency.model.CurrencyModel;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;

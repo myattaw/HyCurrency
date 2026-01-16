@@ -1,0 +1,11 @@
+{
+  "storageType": "json",
+  "storageThreads": 2,
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "database": "hytale",
+    "username": "root",
+    "password": "password"
+  }
+}
