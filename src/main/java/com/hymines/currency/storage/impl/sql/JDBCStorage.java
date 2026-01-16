@@ -3,6 +3,7 @@ package com.hymines.currency.storage.impl.sql;
 import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.model.CurrencyModel;
 import com.hymines.currency.storage.CurrencyStorage;
+import com.hymines.currency.storage.sql.ConnectionPool;
 import com.hymines.currency.storage.sql.PreparedStatementBuilder;
 import com.hymines.currency.storage.sql.SqlStatements;
 
@@ -15,7 +16,7 @@ import java.util.function.Function;
 public abstract class JDBCStorage implements CurrencyStorage {
 
     protected final HyCurrencyPlugin plugin;
-    protected Connection connection;
+    protected ConnectionPool connectionPool;
     protected final String tableName;
 
     public JDBCStorage(HyCurrencyPlugin plugin) {
@@ -24,27 +25,27 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     /**
-     * Open the database connection
+     * Create and configure the connection pool for this database type.
      */
-    public abstract boolean openConnection();
+    protected abstract ConnectionPool createConnectionPool();
 
     /**
-     * Get the SQL type for currency columns
+     * Get the SQL type for currency columns.
      */
     protected abstract String getCurrencyColumnType();
 
     /**
-     * Get the SQL type for the primary key (player UUID)
+     * Get the SQL type for the primary key (player UUID).
      */
     protected abstract String getPrimaryKeyType();
 
     /**
-     * Get the database-specific upsert SQL template
+     * Get the database-specific upsert SQL template.
      */
     protected abstract String getUpsertTemplate();
 
     /**
-     * Get the database-specific add column SQL template
+     * Get the database-specific add column SQL template.
      */
     protected abstract String getAddColumnTemplate();
 
@@ -56,48 +57,38 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     /**
-     * Check if the connection is still valid
+     * Get a connection from the pool.
      */
-    public boolean isConnectionValid() {
-        try {
-            return connection != null && !connection.isClosed() && connection.isValid(5);
-        } catch (SQLException e) {
-            return false;
+    protected Connection getConnection() throws SQLException {
+        if (connectionPool == null || !connectionPool.isRunning()) {
+            throw new SQLException("Connection pool is not available");
         }
-    }
-
-    /**
-     * Get the active database connection, reconnecting if necessary
-     */
-    public Connection getConnection() {
-        if (!isConnectionValid() && !openConnection()) {
-            return null;
-        }
-        return connection;
+        return connectionPool.getConnection();
     }
 
     @Override
     public void initialize() {
-        if (!openConnection() || connection == null) {
-            plugin.getLogger().atSevere().log("Failed to open database connection during storage initialization");
-            throw new RuntimeException("Failed to open database connection");
+        try {
+            this.connectionPool = createConnectionPool();
+            if (connectionPool == null || !connectionPool.isRunning()) {
+                throw new RuntimeException("Failed to create connection pool");
+            }
+            plugin.getLogger().atInfo().log("Database connection pool initialized");
+            createTableIfNotExists();
+            syncCurrencyColumns();
+        } catch (Exception e) {
+            plugin.getLogger().atSevere().log("Failed to initialize database: " + e.getMessage());
+            throw new RuntimeException("Failed to initialize database", e);
         }
-        createTableIfNotExists();
-        syncCurrencyColumns();
     }
 
     protected void createTableIfNotExists() {
-        Connection conn = getConnection();
-        if (conn == null) {
-            plugin.getLogger().atWarning().log("No DB connection available, skipping table creation");
-            return;
-        }
-
         String sql = SqlStatements.CREATE_TABLE
                 .replace("{table}", tableName)
                 .replace("{pk_type}", getPrimaryKeyType());
 
-        try (Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to create table: " + e.getMessage());
@@ -111,16 +102,14 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     protected void addCurrencyColumn(String currencyId) {
-        Connection conn = getConnection();
-        if (conn == null) return;
-
         String columnName = sanitizeColumnName(currencyId);
         String sql = getAddColumnTemplate()
                 .replace("{table}", tableName)
                 .replace("{column}", columnName)
                 .replace("{type}", getCurrencyColumnType());
 
-        try (Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
@@ -154,27 +143,24 @@ public abstract class JDBCStorage implements CurrencyStorage {
                 .replace("{table}", tableName)
                 .replace("{columns}", columns);
 
-        Connection conn = getConnection();
-        if (conn == null) {
-            currencyIds.forEach(model::addCurrency);
-            return model;
-        }
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, playerUuid);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                for (String currencyId : currencyIds) {
-                    BigDecimal amount = rs.getBigDecimal(sanitizeColumnName(currencyId));
-                    if (amount != null) {
-                        model.setCurrency(currencyId, amount);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    for (String currencyId : currencyIds) {
+                        BigDecimal amount = rs.getBigDecimal(sanitizeColumnName(currencyId));
+                        if (amount != null) {
+                            model.setCurrency(currencyId, amount);
+                        }
                     }
+                } else {
+                    currencyIds.forEach(model::addCurrency);
                 }
-            } else {
-                currencyIds.forEach(model::addCurrency);
             }
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to load player data: " + e.getMessage());
+            currencyIds.forEach(model::addCurrency);
         }
         return model;
     }
@@ -191,12 +177,12 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     protected void save(String playerId, CurrencyModel model) {
-        Connection conn = getConnection();
-        if (conn == null || model.getCurrencies().isEmpty()) return;
+        if (model.getCurrencies().isEmpty()) return;
 
         String sql = buildUpsertSql(model.getCurrencies().keySet());
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             setUpsertParameters(stmt, playerId, model.getCurrencies());
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -227,8 +213,7 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     private void saveAll(Map<String, CurrencyModel> allPlayersData) {
-        Connection conn = getConnection();
-        if (conn == null || allPlayersData.isEmpty()) return;
+        if (allPlayersData.isEmpty()) return;
 
         Set<String> allCurrencyIds = collectAllCurrencyIds(allPlayersData);
         if (allCurrencyIds.isEmpty()) return;
@@ -236,7 +221,8 @@ public abstract class JDBCStorage implements CurrencyStorage {
         String sql = buildUpsertSql(allCurrencyIds);
         List<String> currencyOrder = new ArrayList<>(allCurrencyIds);
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (Map.Entry<String, CurrencyModel> entry : allPlayersData.entrySet()) {
                 addBatchEntry(stmt, entry.getKey(), entry.getValue().getCurrencies(), currencyOrder);
             }
@@ -272,14 +258,12 @@ public abstract class JDBCStorage implements CurrencyStorage {
     public void removeCurrency(String currencyId, boolean deleteData) {
         if (!deleteData) return;
 
-        Connection conn = getConnection();
-        if (conn == null) return;
-
         String sql = SqlStatements.ALTER_TABLE_DROP_COLUMN
                 .replace("{table}", tableName)
                 .replace("{column}", sanitizeColumnName(currencyId));
 
-        try (Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to remove currency column: " + e.getMessage());
@@ -289,12 +273,9 @@ public abstract class JDBCStorage implements CurrencyStorage {
     @Override
     public void unload() {
         saveAll();
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            plugin.getLogger().atSevere().log("Failed to close connection: " + e.getMessage());
+        if (connectionPool != null) {
+            plugin.getLogger().atInfo().log("Closing database connection pool. Stats: " + connectionPool.getPoolStats());
+            connectionPool.close();
         }
     }
 
@@ -307,14 +288,13 @@ public abstract class JDBCStorage implements CurrencyStorage {
                     .replace("{table}", tableName)
                     .replace("{column}", columnName);
 
-            Connection conn = getConnection();
-            if (conn == null) return results;
-
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            try (Connection conn = getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, limit);
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    results.put(rs.getString("player_uuid"), rs.getBigDecimal(columnName).intValue());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        results.put(rs.getString("player_uuid"), rs.getBigDecimal(columnName).intValue());
+                    }
                 }
             } catch (SQLException e) {
                 plugin.getLogger().atSevere().log("Failed to get top balances: " + e.getMessage());
@@ -322,5 +302,4 @@ public abstract class JDBCStorage implements CurrencyStorage {
             return results;
         }, plugin.getDbExecutor());
     }
-
 }

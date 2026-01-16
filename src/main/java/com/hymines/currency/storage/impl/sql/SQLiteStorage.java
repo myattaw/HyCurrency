@@ -1,12 +1,11 @@
 package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.ConnectionPool;
 import com.hymines.currency.storage.sql.PreparedStatementBuilder;
 import com.hymines.currency.storage.sql.SqlStatements;
 
 import java.nio.file.Path;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.function.Function;
 
@@ -20,16 +19,24 @@ public class SQLiteStorage extends JDBCStorage {
     }
 
     @Override
-    public boolean openConnection() {
-        try {
-            Class.forName(SqlStatements.SQLITE_DRIVER);
-            String url = SqlStatements.SQLITE_URL.replace("{path}", databasePath.toAbsolutePath().toString());
-            connection = DriverManager.getConnection(url);
-            return true;
-        } catch (ClassNotFoundException | SQLException e) {
-            plugin.getLogger().atSevere().log("Failed to connect to SQLite: " + e.getMessage());
-            return false;
-        }
+    protected ConnectionPool createConnectionPool() {
+        String url = SqlStatements.SQLITE_URL
+                .replace("{path}", databasePath.toAbsolutePath().toString());
+
+        // SQLite works best with a single connection due to file locking
+        return ConnectionPool.builder()
+                .poolName("HyCurrency-SQLite")
+                .jdbcUrl(url)
+                .driverClassName(SqlStatements.SQLITE_DRIVER)
+                .maximumPoolSize(1)  // SQLite is single-threaded for writes
+                .minimumIdle(1)
+                .connectionTimeout(30000)
+                // SQLite-specific pragmas for better performance
+                .addDataSourceProperty("journal_mode", "WAL")
+                .addDataSourceProperty("synchronous", "NORMAL")
+                .addDataSourceProperty("cache_size", "10000")
+                .addDataSourceProperty("foreign_keys", "ON")
+                .build();
     }
 
     @Override
@@ -56,4 +63,5 @@ public class SQLiteStorage extends JDBCStorage {
     protected Function<List<String>, String> getUpdateClauseBuilder() {
         return PreparedStatementBuilder.UpsertBuilder::noUpdateClause;
     }
+
 }

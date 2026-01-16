@@ -1,11 +1,10 @@
 package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.ConnectionPool;
 import com.hymines.currency.storage.sql.PreparedStatementBuilder;
 import com.hymines.currency.storage.sql.SqlStatements;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.function.Function;
 
@@ -28,19 +27,21 @@ public class PostgresStorage extends JDBCStorage {
     }
 
     @Override
-    public boolean openConnection() {
-        try {
-            Class.forName(SqlStatements.POSTGRES_DRIVER);
-            String url = SqlStatements.POSTGRES_URL
-                    .replace("{host}", host)
-                    .replace("{port}", String.valueOf(port))
-                    .replace("{database}", database);
-            connection = DriverManager.getConnection(url, username, password);
-            return true;
-        } catch (ClassNotFoundException | SQLException e) {
-            plugin.getLogger().atSevere().log("Failed to connect to PostgreSQL: " + e.getMessage());
-            return false;
-        }
+    protected ConnectionPool createConnectionPool() {
+        String url = SqlStatements.POSTGRES_URL
+                .replace("{host}", host)
+                .replace("{port}", String.valueOf(port))
+                .replace("{database}", database);
+
+        return ConnectionPool.builder()
+                .poolName("HyCurrency-PostgreSQL")
+                .jdbcUrl(url)
+                .driverClassName(SqlStatements.POSTGRES_DRIVER)
+                .username(username)
+                .password(password)
+                .maximumPoolSize(10)
+                .minimumIdle(2)
+                .build();
     }
 
     @Override

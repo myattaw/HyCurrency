@@ -1,10 +1,8 @@
 package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.ConnectionPool;
 import com.hymines.currency.storage.sql.SqlStatements;
-
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 public class MySQLStorage extends JDBCStorage {
 
@@ -25,22 +23,32 @@ public class MySQLStorage extends JDBCStorage {
     }
 
     @Override
-    public boolean openConnection() {
-        try {
-            Class.forName(SqlStatements.MYSQL_DRIVER);
-            String url = SqlStatements.MYSQL_URL
-                    .replace("{host}", host)
-                    .replace("{port}", String.valueOf(port))
-                    .replace("{database}", database);
-            connection = DriverManager.getConnection(url, username, password);
-            return true;
-        } catch (ClassNotFoundException e) {
-            plugin.getLogger().atSevere().log("MySQL driver not found: " + SqlStatements.MYSQL_DRIVER);
-            return false;
-        } catch (SQLException e) {
-            plugin.getLogger().atSevere().log("Failed to connect to MySQL: " + e.getMessage());
-            return false;
-        }
+    protected ConnectionPool createConnectionPool() {
+        String url = SqlStatements.MYSQL_URL
+                .replace("{host}", host)
+                .replace("{port}", String.valueOf(port))
+                .replace("{database}", database);
+
+        return ConnectionPool.builder()
+                .poolName("HyCurrency-MySQL")
+                .jdbcUrl(url)
+                .driverClassName(SqlStatements.MYSQL_DRIVER)
+                .username(username)
+                .password(password)
+                .maximumPoolSize(10)
+                .minimumIdle(2)
+                // MySQL-specific optimizations
+                .addDataSourceProperty("cachePrepStmts", "true")
+                .addDataSourceProperty("prepStmtCacheSize", "250")
+                .addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
+                .addDataSourceProperty("useServerPrepStmts", "true")
+                .addDataSourceProperty("useLocalSessionState", "true")
+                .addDataSourceProperty("rewriteBatchedStatements", "true")
+                .addDataSourceProperty("cacheResultSetMetadata", "true")
+                .addDataSourceProperty("cacheServerConfiguration", "true")
+                .addDataSourceProperty("elideSetAutoCommits", "true")
+                .addDataSourceProperty("maintainTimeStats", "false")
+                .build();
     }
 
     @Override
@@ -62,5 +70,4 @@ public class MySQLStorage extends JDBCStorage {
     protected String getAddColumnTemplate() {
         return SqlStatements.ALTER_TABLE_ADD_COLUMN;
     }
-
 }
