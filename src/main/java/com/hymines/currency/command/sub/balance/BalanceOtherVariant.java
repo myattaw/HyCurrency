@@ -2,6 +2,7 @@ package com.hymines.currency.command.sub.balance;
 
 import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.model.CurrencyModel;
+import com.hymines.currency.model.CurrencyMetadata;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -12,6 +13,8 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -42,7 +45,15 @@ public class BalanceOtherVariant extends AbstractCommand {
 
         String header = isSelf ? "Your balances:" : target.getUsername() + "'s balances:";
         String body = model.getCurrencies().entrySet().stream()
-                .map(e -> "  " + e.getKey() + ": " + e.getValue())
+                .map(e -> {
+                    String currencyId = e.getKey();
+                    BigDecimal amount = e.getValue();
+                    CurrencyMetadata meta = plugin.getCurrencyConfig() == null ? null : plugin.getCurrencyConfig().getCurrency(currencyId);
+                    if (meta != null) {
+                        return "  " + meta.getName() + ": " + meta.formatAmount(amount.toPlainString());
+                    }
+                    return "  " + currencyId + ": " + amount.toPlainString();
+                })
                 .collect(Collectors.joining("\n"));
 
         ctx.sendMessage(Message.raw(header + "\n" + body));

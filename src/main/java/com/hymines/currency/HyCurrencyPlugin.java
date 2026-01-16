@@ -2,7 +2,7 @@ package com.hymines.currency;
 
 import com.hymines.currency.command.CurrencyCommand;
 import com.hymines.currency.config.PluginConfig;
-import com.hymines.currency.config.currency.CurrencyConfig;
+import com.hymines.currency.config.CurrencyConfig;
 import com.hymines.currency.listener.PlayerCurrencyHandler;
 import com.hymines.currency.model.CurrencyManager;
 import com.hymines.currency.model.CurrencyModel;

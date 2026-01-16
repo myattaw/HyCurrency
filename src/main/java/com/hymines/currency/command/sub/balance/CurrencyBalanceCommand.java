@@ -1,6 +1,7 @@
 package com.hymines.currency.command.sub.balance;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.model.CurrencyMetadata;
 import com.hymines.currency.model.CurrencyModel;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
@@ -59,7 +60,16 @@ public class CurrencyBalanceCommand extends AbstractCommand {
     private String formatBalances(String name, Map<String, BigDecimal> currencies, boolean isSelf) {
         String header = isSelf ? "Your balances:" : name + "'s balances:";
         String body = currencies.entrySet().stream()
-                .map(e -> "  " + e.getKey() + ": " + e.getValue())
+                .map(e -> {
+                    String currencyId = e.getKey();
+                    BigDecimal amount = e.getValue();
+                    CurrencyMetadata meta = plugin.getCurrencyConfig() == null ? null : plugin.getCurrencyConfig().getCurrency(currencyId);
+                    if (meta != null) {
+                        return "  " + meta.getName() + ": " + meta.formatAmount(amount.toPlainString());
+                    }
+                    // fallback to id + raw amount
+                    return "  " + currencyId + ": " + amount.toPlainString();
+                })
                 .collect(Collectors.joining("\n"));
         return header + "\n" + body;
     }

@@ -1,8 +1,7 @@
 package com.hymines.currency.listener;
 
 import com.hymines.currency.HyCurrencyPlugin;
-import com.hymines.currency.config.currency.CurrencyConfig;
-import com.hymines.currency.model.CurrencyModel;
+import com.hymines.currency.config.CurrencyConfig;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -19,26 +18,32 @@ public class PlayerCurrencyHandler {
         PlayerCurrencyHandler listener = new PlayerCurrencyHandler(plugin);
         plugin.getEventRegistry().registerGlobal(PlayerConnectEvent.class, listener::onPlayerConnect);
         plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, listener::onPlayerDisconnect);
+
     }
 
     private void onPlayerConnect(PlayerConnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
+        String playerUuid = playerRef.getUuid().toString();
 
-        // Get or create the player's currency model
-        CurrencyModel model = plugin.getCurrencyDataMap().computeIfAbsent(
-                playerRef.getUuid().toString(), k -> new CurrencyModel()
-        );
-
-        // Auto-grant currencies that are configured with autoGrant=true
-        CurrencyConfig currencyConfig = plugin.getCurrencyConfig();
-        if (currencyConfig != null && currencyConfig.getCurrencies() != null) {
-            currencyConfig.getCurrencies().forEach((currencyId, currencyEntry) -> {
-                if (currencyEntry.isAutoGrant() && !model.hasCurrency(currencyId)) {
-                    model.setCurrency(currencyId, currencyEntry.getDefaultAmount());
-                    plugin.getLogger().atInfo().log("Auto-granted currency '" + currencyId + "' with default amount " + currencyEntry.getDefaultAmount() + " to player " + playerRef.getUsername());
-                }
-            });
-        }
+        // Load player currency data from database
+        plugin.getCurrencyManager().loadPlayer(playerUuid)
+                .thenAccept(model -> {
+                    // Auto-grant currencies that are configured with autoGrant=true
+                    CurrencyConfig currencyConfig = plugin.getCurrencyConfig();
+                    if (currencyConfig != null && currencyConfig.getCurrencies() != null) {
+                        currencyConfig.getCurrencies().forEach((currencyId, currencyEntry) -> {
+                            if (currencyEntry.isAutoGrant() && !model.hasCurrency(currencyId)) {
+                                model.setCurrency(currencyId, currencyEntry.getDefaultAmount());
+                                plugin.getLogger().atInfo().log("Auto-granted currency '" + currencyId + "' with default amount " + currencyEntry.getDefaultAmount() + " to player " + playerRef.getUsername());
+                            }
+                        });
+                    }
+                    plugin.getLogger().atInfo().log("Loaded currency data for player " + playerRef.getUsername());
+                })
+                .exceptionally(ex -> {
+                    plugin.getLogger().atSevere().log("Failed to load currency data for player " + playerRef.getUsername() + ": " + ex.getMessage());
+                    return null;
+                });
     }
 
     private void onPlayerDisconnect(PlayerDisconnectEvent event) {

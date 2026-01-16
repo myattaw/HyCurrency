@@ -36,7 +36,7 @@ public class MySQLStorage extends JDBCStorage {
                 .username(username)
                 .password(password)
                 .maximumPoolSize(10)
-                .minimumIdle(2)
+                .minimumIdle(10)
                 // MySQL-specific optimizations
                 .addDataSourceProperty("cachePrepStmts", "true")
                 .addDataSourceProperty("prepStmtCacheSize", "250")

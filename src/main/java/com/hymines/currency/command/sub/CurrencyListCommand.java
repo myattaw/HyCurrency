@@ -1,8 +1,8 @@
 package com.hymines.currency.command.sub;
 
 import com.hymines.currency.HyCurrencyPlugin;
-import com.hymines.currency.config.currency.CurrencyConfig;
-import com.hymines.currency.config.currency.CurrencyEntry;
+import com.hymines.currency.config.CurrencyConfig;
+import com.hymines.currency.model.CurrencyMetadata;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -33,9 +33,9 @@ public class CurrencyListCommand extends AbstractCommand {
 
         StringBuilder sb = new StringBuilder();
         sb.append("Available currencies:\n");
-        for (Map.Entry<String, CurrencyEntry> e : cfg.getCurrencies().entrySet()) {
+        for (Map.Entry<String, CurrencyMetadata> e : cfg.getCurrencies().entrySet()) {
             String id = e.getKey();
-            CurrencyEntry entry = e.getValue();
+            CurrencyMetadata entry = e.getValue();
             sb.append("  ").append(id)
                     .append(": ").append(entry.getName())
                     .append(" (").append(entry.getSymbol()).append(")")
@@ -47,4 +47,3 @@ public class CurrencyListCommand extends AbstractCommand {
         return CompletableFuture.completedFuture(null);
     }
 }
-

@@ -33,6 +33,7 @@ public class PostgresStorage extends JDBCStorage {
                 .replace("{port}", String.valueOf(port))
                 .replace("{database}", database);
 
+        //TODO: make these configurable
         return ConnectionPool.builder()
                 .poolName("HyCurrency-PostgreSQL")
                 .jdbcUrl(url)
@@ -40,7 +41,7 @@ public class PostgresStorage extends JDBCStorage {
                 .username(username)
                 .password(password)
                 .maximumPoolSize(10)
-                .minimumIdle(2)
+                .minimumIdle(10)
                 .build();
     }
 

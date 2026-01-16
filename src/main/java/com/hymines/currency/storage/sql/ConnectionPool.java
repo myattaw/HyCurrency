@@ -67,7 +67,7 @@ public class ConnectionPool {
         private Builder() {
             // Set sensible defaults
             config.setMaximumPoolSize(10);
-            config.setMinimumIdle(2);
+            config.setMinimumIdle(10);
             config.setIdleTimeout(300000); // 5 minutes
             config.setConnectionTimeout(10000); // 10 seconds
             config.setMaxLifetime(1800000); // 30 minutes

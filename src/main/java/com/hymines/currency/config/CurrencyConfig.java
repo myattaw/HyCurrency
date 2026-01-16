@@ -1,7 +1,8 @@
-package com.hymines.currency.config.currency;
+package com.hymines.currency.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.hymines.currency.model.CurrencyMetadata;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,16 +19,16 @@ public class CurrencyConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     // Preserve insertion order for predictable JSON output
-    private Map<String, CurrencyEntry> currencies = new LinkedHashMap<>();
+    private Map<String, CurrencyMetadata> currencies = new LinkedHashMap<>();
 
     public CurrencyConfig() {
     }
 
-    public Map<String, CurrencyEntry> getCurrencies() {
+    public Map<String, CurrencyMetadata> getCurrencies() {
         return currencies;
     }
 
-    public CurrencyEntry getCurrency(String id) {
+    public CurrencyMetadata getCurrency(String id) {
         return currencies.get(id);
     }
 
@@ -71,8 +72,8 @@ public class CurrencyConfig {
 
     private static CurrencyConfig createDefault() {
         CurrencyConfig cfg = new CurrencyConfig();
-        cfg.currencies.put("money", new CurrencyEntry("Money", "$", "%symbol%%amount%", true, true, BigDecimal.ZERO));
-        cfg.currencies.put("vote_points", new CurrencyEntry("Vote Points", "FP", "%amount% %symbol%", false, false, BigDecimal.ZERO));
+        cfg.currencies.put("money", new CurrencyMetadata("money", "Money", "$", "%symbol%%amount%", true, true, BigDecimal.ZERO));
+        cfg.currencies.put("vote_points", new CurrencyMetadata("vote_points", "Vote Points", "FP", "%amount% %symbol%", false, false, BigDecimal.ZERO));
         return cfg;
     }
 
