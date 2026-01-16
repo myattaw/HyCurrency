@@ -2,6 +2,7 @@ package com.hymines.currency.command;
 
 import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.command.sub.*;
+import com.hymines.currency.command.sub.balance.CurrencyBalanceCommand;
 import com.hymines.currency.command.sub.leaderboard.CurrencyTopCommand;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
