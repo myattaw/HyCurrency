@@ -1,5 +1,7 @@
 package com.hymines.currency;
 
+import com.hymines.currency.service.CurrencyService;
+import com.hymines.currency.api.Economy;
 import com.hymines.currency.command.CurrencyCommand;
 import com.hymines.currency.config.PluginConfig;
 import com.hymines.currency.config.CurrencyConfig;
@@ -21,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 public class HyCurrencyPlugin extends JavaPlugin {
 
-    private static volatile HyCurrencyPlugin instance;
-
     private final Map<String, CurrencyModel> currencyDataMap = new ConcurrentHashMap<>();
     private ExecutorService dbExecutor;
 
@@ -31,10 +31,10 @@ public class HyCurrencyPlugin extends JavaPlugin {
     private CurrencyConfig currencyConfig;
 
     private CurrencyManager currencyManager;
+    private Economy economy;
 
     public HyCurrencyPlugin(@Nonnull JavaPluginInit init) {
         super(init);
-        instance = this;
     }
 
     @Override
@@ -62,7 +62,6 @@ public class HyCurrencyPlugin extends JavaPlugin {
                 dbExecutor.shutdownNow();
             }
         }
-        instance = null;
     }
 
     private void loadConfig() {
@@ -89,6 +88,7 @@ public class HyCurrencyPlugin extends JavaPlugin {
         this.dbExecutor = Executors.newFixedThreadPool(pluginConfig.getStorageThreads());
         StorageFactory storageFactory = new StorageFactory(this, pluginConfig);
         this.currencyManager = new CurrencyManager(this, storageFactory.createAndInitialize());
+        this.economy = new CurrencyService(this, currencyManager);
     }
 
     public PluginConfig getPluginConfig() {
@@ -111,8 +111,14 @@ public class HyCurrencyPlugin extends JavaPlugin {
         return currencyManager;
     }
 
-    public static HyCurrencyPlugin getInstance() {
-        return instance;
+    /**
+     * Gets the Economy API implementation.
+     *
+     * @return The Economy provider for this plugin
+     */
+    @Nonnull
+    public Economy getEconomy() {
+        return economy;
     }
 
 }

@@ -27,7 +27,7 @@ public class CurrencyBalanceCommand extends AbstractCommand {
         this.plugin = plugin;
 
         // Variant: /currency bal <player>
-        this.addUsageVariant(new BalanceOtherVariant(plugin));
+        this.addUsageVariant(new CurrencyBalanceOtherVariant(plugin));
     }
 
     @Nullable

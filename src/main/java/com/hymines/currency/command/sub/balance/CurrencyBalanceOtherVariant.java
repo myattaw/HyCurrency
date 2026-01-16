@@ -1,8 +1,8 @@
 package com.hymines.currency.command.sub.balance;
 
 import com.hymines.currency.HyCurrencyPlugin;
-import com.hymines.currency.model.CurrencyModel;
 import com.hymines.currency.model.CurrencyMetadata;
+import com.hymines.currency.model.CurrencyModel;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -14,16 +14,15 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class BalanceOtherVariant extends AbstractCommand {
+public class CurrencyBalanceOtherVariant extends AbstractCommand {
 
     private final HyCurrencyPlugin plugin;
     private final RequiredArg<PlayerRef> playerArg;
 
-    public BalanceOtherVariant(HyCurrencyPlugin plugin) {
+    public CurrencyBalanceOtherVariant(HyCurrencyPlugin plugin) {
         super("Check another player's currency balance");
         this.plugin = plugin;
         this.playerArg = withRequiredArg("player", "Player to check balance for", ArgTypes.PLAYER_REF);
