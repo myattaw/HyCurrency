@@ -4,12 +4,14 @@ import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.model.CurrencyMetadata;
 import com.hymines.currency.model.CurrencyModel;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.NameMatching;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,20 +22,26 @@ import java.util.stream.Collectors;
 public class CurrencyBalanceOtherVariant extends AbstractCommand {
 
     private final HyCurrencyPlugin plugin;
-    private final RequiredArg<PlayerRef> playerArg;
+    private final RequiredArg<String> playerArg;
 
     public CurrencyBalanceOtherVariant(HyCurrencyPlugin plugin) {
         super("Check another player's currency balance");
         this.plugin = plugin;
-        this.playerArg = withRequiredArg("player", "Player to check balance for", ArgTypes.PLAYER_REF);
+        this.playerArg = withRequiredArg("player", "Player to check balance for", ArgTypes.STRING);
     }
 
     @Nullable
     @Override
     protected CompletableFuture<Void> execute(@Nonnull CommandContext ctx) {
-        PlayerRef target = playerArg.get(ctx);
+        PlayerRef target = Universe.get().getPlayerByUsername(playerArg.get(ctx), NameMatching.EXACT_IGNORE_CASE);
 
-        boolean isSelf = ctx.sender() instanceof Player p && target.getUuid().equals(p.getUuid());
+        if (target == null) {
+            ctx.sendMessage(Message.raw("Player not found."));
+            return CompletableFuture.completedFuture(null);
+        }
+
+        PlayerRef selfRef = Universe.get().getPlayer(ctx.sender().getUuid());
+        boolean isSelf = selfRef != null && target.getUuid().equals(selfRef.getUuid());
 
         // Reuse same logic (copy minimal to avoid making outer method static)
         CurrencyModel model = plugin.getCurrencyDataMap().get(target.getUuid().toString());

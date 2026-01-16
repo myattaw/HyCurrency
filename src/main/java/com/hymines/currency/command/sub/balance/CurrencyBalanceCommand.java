@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,13 +34,20 @@ public class CurrencyBalanceCommand extends AbstractCommand {
     @Nullable
     @Override
     public CompletableFuture<Void> execute(@Nonnull CommandContext ctx) {
+
         // Base usage: /currency bal  (self only)
-        if (!(ctx.sender() instanceof Player player)) {
+        if (!(ctx.sender() instanceof Player)) {
             ctx.sendMessage(Message.raw("Console must specify a player: /currency bal <player>"));
             return CompletableFuture.completedFuture(null);
         }
 
-        return sendBalance(ctx, player.getPlayerRef(), true);
+        PlayerRef selfRef = Universe.get().getPlayer(ctx.sender().getUuid());
+        if (selfRef == null) {
+            ctx.sendMessage(Message.raw("Could not find your player account."));
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return sendBalance(ctx, selfRef, true);
     }
 
     private CompletableFuture<Void> sendBalance(CommandContext ctx, PlayerRef target, boolean isSelf) {

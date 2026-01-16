@@ -18,7 +18,6 @@ public class PlayerCurrencyHandler {
         PlayerCurrencyHandler listener = new PlayerCurrencyHandler(plugin);
         plugin.getEventRegistry().registerGlobal(PlayerConnectEvent.class, listener::onPlayerConnect);
         plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, listener::onPlayerDisconnect);
-
     }
 
     private void onPlayerConnect(PlayerConnectEvent event) {

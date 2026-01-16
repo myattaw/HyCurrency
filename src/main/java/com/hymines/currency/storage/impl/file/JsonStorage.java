@@ -117,6 +117,7 @@ public class JsonStorage implements CurrencyStorage {
 
     @Override
     public void removeCurrency(String currencyId, boolean deleteData) {
+        //TODO: add config option to delete currency data from player files
         if (deleteData) {
             // Remove from cache
             for (Map<String, BigDecimal> playerData : dataCache.values()) {

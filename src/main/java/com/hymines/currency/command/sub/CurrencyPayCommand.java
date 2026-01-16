@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredAr
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -35,8 +36,14 @@ public class CurrencyPayCommand extends AbstractCommand {
     @Override
     public CompletableFuture<Void> execute(@Nonnull CommandContext commandContext) {
         // Check if sender is a player (not console)
-        if (!(commandContext.sender() instanceof Player sender)) {
+        if (!(commandContext.sender() instanceof Player)) {
             commandContext.sendMessage(Message.raw("This command can only be used by players."));
+            return CompletableFuture.completedFuture(null);
+        }
+
+        PlayerRef selfRef = Universe.get().getPlayer(commandContext.sender().getUuid());
+        if (selfRef == null) {
+            commandContext.sendMessage(Message.raw("Could not find your player account."));
             return CompletableFuture.completedFuture(null);
         }
 
@@ -50,7 +57,7 @@ public class CurrencyPayCommand extends AbstractCommand {
         }
 
         // Compare UUIDs to check if paying self
-        if (sender.getUuid().equals(target.getUuid())) {
+        if (selfRef.getUuid().equals(target.getUuid())) {
             commandContext.sendMessage(Message.raw("You cannot pay yourself."));
             return CompletableFuture.completedFuture(null);
         }
@@ -58,7 +65,7 @@ public class CurrencyPayCommand extends AbstractCommand {
         Map<String, CurrencyModel> currencyDataMap = plugin.getCurrencyDataMap();
 
         CurrencyModel senderModel = currencyDataMap.computeIfAbsent(
-                sender.getUuid().toString(), k -> new CurrencyModel()
+                selfRef.getUuid().toString(), k -> new CurrencyModel()
         );
         CurrencyModel targetModel = currencyDataMap.computeIfAbsent(
                 target.getUuid().toString(), k -> new CurrencyModel()
@@ -67,14 +74,19 @@ public class CurrencyPayCommand extends AbstractCommand {
         BigDecimal senderBalance = senderModel.getCurrency(currency);
 
         if (senderBalance.compareTo(amount) < 0) {
-            commandContext.sendMessage(Message.raw("Insufficient funds. You have " + senderBalance + " " + currency + "."));
+            commandContext.sendMessage(Message.raw(
+                    "Insufficient funds. You have " + senderBalance + " " + currency + "."
+            ));
             return CompletableFuture.completedFuture(null);
         }
 
         senderModel.addAmount(currency, amount.negate());
         targetModel.addAmount(currency, amount);
 
-        commandContext.sendMessage(Message.raw("Paid " + amount + " " + currency + " to " + target.getUsername() + "."));
+        commandContext.sendMessage(Message.raw(
+                "Paid " + amount + " " + currency + " to " + target.getUsername() + "."
+        ));
         return CompletableFuture.completedFuture(null);
     }
+
 }
