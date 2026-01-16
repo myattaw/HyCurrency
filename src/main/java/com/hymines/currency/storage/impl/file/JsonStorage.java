@@ -1,4 +1,4 @@
-package com.hymines.currency.storage.file;
+package com.hymines.currency.storage.impl.file;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,7 +12,8 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -141,30 +142,20 @@ public class JsonStorage implements CurrencyStorage {
         return CompletableFuture.supplyAsync(() -> {
             // First, load all player files to ensure cache is complete
             try {
-                Files.list(dataFolder)
-                        .filter(p -> p.toString().endsWith(".json"))
-                        .forEach(p -> {
-                            String uuid = p.getFileName().toString().replace(".json", "");
-                            if (!dataCache.containsKey(uuid)) {
-                                loadFromStorage(uuid);
-                            }
-                        });
+                Files.list(dataFolder).filter(p -> p.toString().endsWith(".json")).forEach(p -> {
+                    String uuid = p.getFileName().toString().replace(".json", "");
+                    if (!dataCache.containsKey(uuid)) {
+                        loadFromStorage(uuid);
+                    }
+                });
             } catch (IOException e) {
                 plugin.getLogger().atSevere().log("Failed to list player files: " + e.getMessage());
             }
 
             // Sort and return top balances
-            return dataCache.entrySet().stream()
-                    .filter(e -> e.getValue().containsKey(currencyId))
-                    .sorted((a, b) -> b.getValue().get(currencyId).compareTo(a.getValue().get(currencyId)))
-                    .limit(limit)
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            e -> e.getValue().get(currencyId).intValue(),
-                            (a, b) -> a,
-                            LinkedHashMap::new
-                    ));
+            return dataCache.entrySet().stream().filter(e -> e.getValue().containsKey(currencyId)).sorted((a, b) -> b.getValue().get(currencyId).compareTo(a.getValue().get(currencyId))).limit(limit).collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(currencyId).intValue(), (a, b) -> a, LinkedHashMap::new));
         }, plugin.getDbExecutor());
     }
+
 }
 

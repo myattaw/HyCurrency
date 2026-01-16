@@ -43,5 +43,6 @@ public final class SqlStatements {
     public static final String POSTGRES_PK_TYPE = "VARCHAR(36)";
     public static final String SQLITE_CURRENCY_TYPE = "REAL";
     public static final String SQLITE_PK_TYPE = "TEXT";
+
 }
 

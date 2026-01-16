@@ -1,13 +1,14 @@
-package com.hymines.currency.storage.sql;
+package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.PreparedStatementBuilder;
+import com.hymines.currency.storage.sql.SqlStatements;
 
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
+import java.util.function.Function;
 
 public class SQLiteStorage extends JDBCStorage {
 
@@ -48,13 +49,11 @@ public class SQLiteStorage extends JDBCStorage {
 
     @Override
     protected String getAddColumnTemplate() {
-        // SQLite doesn't support IF NOT EXISTS for columns
         return SqlStatements.ALTER_TABLE_ADD_COLUMN;
     }
 
     @Override
-    protected void addUpsertParameters(PreparedStatement stmt, int startIndex, Map<String, BigDecimal> currencies) throws SQLException {
-        // SQLite INSERT OR REPLACE doesn't need extra parameters
+    protected Function<List<String>, String> getUpdateClauseBuilder() {
+        return PreparedStatementBuilder.UpsertBuilder::noUpdateClause;
     }
-
 }

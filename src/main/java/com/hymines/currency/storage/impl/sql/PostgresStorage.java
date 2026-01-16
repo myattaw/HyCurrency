@@ -1,12 +1,13 @@
-package com.hymines.currency.storage.sql;
+package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.PreparedStatementBuilder;
+import com.hymines.currency.storage.sql.SqlStatements;
 
-import java.math.BigDecimal;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
+import java.util.function.Function;
 
 public class PostgresStorage extends JDBCStorage {
 
@@ -59,29 +60,11 @@ public class PostgresStorage extends JDBCStorage {
 
     @Override
     protected String getAddColumnTemplate() {
-        // PostgreSQL supports IF NOT EXISTS for columns
         return SqlStatements.ALTER_TABLE_ADD_COLUMN_IF_NOT_EXISTS;
     }
 
     @Override
-    protected String processUpsertTemplate(String columns, String values, String updates) {
-        // PostgreSQL uses EXCLUDED instead of VALUES() for conflict resolution
-        StringBuilder setClause = new StringBuilder();
-        String[] cols = columns.split(", ");
-        for (int i = 1; i < cols.length; i++) { // Skip player_uuid
-            if (setClause.length() > 0) setClause.append(", ");
-            setClause.append(cols[i]).append(" = EXCLUDED.").append(cols[i]);
-        }
-
-        return SqlStatements.UPSERT_POSTGRES
-                .replace("{table}", tableName)
-                .replace("{columns}", columns)
-                .replace("{values}", values)
-                .replace("{updates}", setClause.toString());
-    }
-
-    @Override
-    protected void addUpsertParameters(PreparedStatement stmt, int startIndex, Map<String, BigDecimal> currencies) throws SQLException {
-        // PostgreSQL ON CONFLICT uses EXCLUDED, no extra parameters needed
+    protected Function<List<String>, String> getUpdateClauseBuilder() {
+        return PreparedStatementBuilder.UpsertBuilder::postgresUpdateClause;
     }
 }

@@ -2,10 +2,10 @@ package com.hymines.currency.storage;
 
 import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.config.PluginConfig;
-import com.hymines.currency.storage.file.JsonStorage;
-import com.hymines.currency.storage.sql.MySQLStorage;
-import com.hymines.currency.storage.sql.PostgresStorage;
-import com.hymines.currency.storage.sql.SQLiteStorage;
+import com.hymines.currency.storage.impl.file.JsonStorage;
+import com.hymines.currency.storage.impl.sql.MySQLStorage;
+import com.hymines.currency.storage.impl.sql.PostgresStorage;
+import com.hymines.currency.storage.impl.sql.SQLiteStorage;
 
 import java.nio.file.Path;
 

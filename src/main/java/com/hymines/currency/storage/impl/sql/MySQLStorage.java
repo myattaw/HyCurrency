@@ -1,12 +1,10 @@
-package com.hymines.currency.storage.sql;
+package com.hymines.currency.storage.impl.sql;
 
 import com.hymines.currency.HyCurrencyPlugin;
+import com.hymines.currency.storage.sql.SqlStatements;
 
-import java.math.BigDecimal;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Map;
 
 public class MySQLStorage extends JDBCStorage {
 
@@ -37,10 +35,10 @@ public class MySQLStorage extends JDBCStorage {
             connection = DriverManager.getConnection(url, username, password);
             return true;
         } catch (ClassNotFoundException e) {
-            plugin.getLogger().atSevere().log("MySQL driver not found: " + SqlStatements.MYSQL_DRIVER + ". Add MySQL Connector/J to the server/plugin classpath or your build dependencies.");
+            plugin.getLogger().atSevere().log("MySQL driver not found: " + SqlStatements.MYSQL_DRIVER);
             return false;
         } catch (SQLException e) {
-            plugin.getLogger().atSevere().log("Failed to connect to MySQL (check host/port/database/credentials): " + e.getMessage());
+            plugin.getLogger().atSevere().log("Failed to connect to MySQL: " + e.getMessage());
             return false;
         }
     }
@@ -62,13 +60,7 @@ public class MySQLStorage extends JDBCStorage {
 
     @Override
     protected String getAddColumnTemplate() {
-        // MySQL doesn't support IF NOT EXISTS for columns
         return SqlStatements.ALTER_TABLE_ADD_COLUMN;
-    }
-
-    @Override
-    protected void addUpsertParameters(PreparedStatement stmt, int startIndex, Map<String, BigDecimal> currencies) throws SQLException {
-        // MySQL ON DUPLICATE KEY UPDATE uses VALUES() function, no extra parameters needed
     }
 
 }
