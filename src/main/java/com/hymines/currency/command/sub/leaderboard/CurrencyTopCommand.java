@@ -7,14 +7,12 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CurrencyTopCommand extends AbstractCommand {
@@ -85,7 +83,8 @@ public class CurrencyTopCommand extends AbstractCommand {
 
         for (int i = startIndex; i < endIndex; i++) {
             LeaderboardEntry entry = entries.get(i);
-            message.append(i + 1).append(". ").append(entry.playerId()).append(": ").append(entry.amount()).append("\n");
+            String username = Universe.get().getPlayer(UUID.fromString(entry.playerId())).getUsername();
+            message.append(i + 1).append(". ").append(username).append(": ").append(entry.amount()).append("\n");
         }
 
         ctx.sendMessage(Message.raw(message.toString().trim()));

@@ -4,14 +4,17 @@
       "name": "Money",
       "symbol": "$",
       "format": "%symbol%%amount%",
-      "leaderboard": true
+      "leaderboard": true,
+      "autoGrant": true,
+      "defaultAmount": 1000
     },
     "vote_points": {
       "name": "Vote Points",
       "symbol": "VP",
       "format": "%amount% %symbol%",
-      "leaderboard": false
+      "leaderboard": false,
+      "autoGrant": false,
+      "defaultAmount": 0
     }
   }
 }
-

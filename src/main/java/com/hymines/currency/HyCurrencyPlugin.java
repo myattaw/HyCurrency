@@ -2,6 +2,7 @@ package com.hymines.currency;
 
 import com.hymines.currency.command.CurrencyCommand;
 import com.hymines.currency.config.CurrencyConfig;
+import com.hymines.currency.listener.PlayerCurrencyHandler;
 import com.hymines.currency.model.CurrencyModel;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
@@ -28,6 +29,7 @@ public class HyCurrencyPlugin extends JavaPlugin {
         super.setup();
         loadConfig();
         getCommandRegistry().registerCommand(new CurrencyCommand(this));
+        PlayerCurrencyHandler.register(this);
     }
 
     private void loadConfig() {

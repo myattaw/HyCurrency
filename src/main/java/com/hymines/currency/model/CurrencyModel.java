@@ -21,6 +21,10 @@ public class CurrencyModel {
         currencies.put(currency, getCurrency(currency).add(amount));
     }
 
+    public boolean hasCurrency(String currency) {
+        return currencies.containsKey(currency);
+    }
+
     public BigDecimal getCurrency(String currency) {
         return currencies.getOrDefault(currency, BigDecimal.ZERO);
     }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -70,8 +71,8 @@ public class CurrencyConfig {
 
     private static CurrencyConfig createDefault() {
         CurrencyConfig cfg = new CurrencyConfig();
-        cfg.currencies.put("money", new CurrencyEntry("Money", "$", "%symbol%%amount%", true));
-        cfg.currencies.put("vote_points", new CurrencyEntry("Vote Points", "FP", "%amount% %symbol%", false));
+        cfg.currencies.put("money", new CurrencyEntry("Money", "$", "%symbol%%amount%", true, true, BigDecimal.ZERO));
+        cfg.currencies.put("vote_points", new CurrencyEntry("Vote Points", "FP", "%amount% %symbol%", false, false, BigDecimal.ZERO));
         return cfg;
     }
 
