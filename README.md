@@ -107,7 +107,8 @@ if (economy.isPlayerOnline(playerId)) {
     // Get balance
     EconomyResponse response = economy.getBalance(playerId, "money");
     if (response.isSuccess()) {
-        BigDecimal balance = response.getBalance();
+        BigDecimal balance = response.getBalanceExact(); // Exact BigDecimal
+        double balanceDouble = response.getBalance();     // As double
     }
     
     // Check if player has enough
@@ -116,12 +117,14 @@ if (economy.isPlayerOnline(playerId)) {
         // Player has at least 100
     } else if (hasResponse.getType() == EconomyResponseType.INSUFFICIENT_FUNDS) {
         // Player doesn't have enough
+        BigDecimal currentBalance = hasResponse.getBalanceExact();
     }
     
     // Withdraw
     EconomyResponse withdrawResponse = economy.withdraw(playerId, "money", BigDecimal.valueOf(50));
     if (withdrawResponse.isSuccess()) {
-        BigDecimal newBalance = withdrawResponse.getBalance();
+        BigDecimal newBalance = withdrawResponse.getBalanceExact();
+        BigDecimal amountWithdrawn = withdrawResponse.getAmountExact();
     }
     
     // Deposit
@@ -147,6 +150,10 @@ economy.getBalance(playerId);
 
 economy.withdraw(playerId, "money", amount);
 economy.withdraw(playerId, amount);
+
+// Double overloads are also available:
+economy.withdraw(playerId, "money", 50.0);
+economy.has(playerId, 100.0);
 ```
 
 ### Async Operations (Any Player)
@@ -154,12 +161,12 @@ economy.withdraw(playerId, amount);
 Async methods work for both online and offline players. They return `CompletableFuture` and may involve database operations.
 
 ```java
-UUID playerId = UUID.fromString("...
+UUID playerId = UUID.fromString("..."); 
 
 // Get balance (works for offline players)
 economy.getBalanceAsync(playerId, "money").thenAccept(response -> {
     if (response.isSuccess()) {
-        BigDecimal balance = response.getBalance();
+        BigDecimal balance = response.getBalanceExact();
         System.out.println("Balance: " + balance);
     } else if (response.getType() == EconomyResponseType.ACCOUNT_NOT_FOUND) {
         System.out.println("Player has no account");
@@ -169,7 +176,7 @@ economy.getBalanceAsync(playerId, "money").thenAccept(response -> {
 // Withdraw from offline player
 economy.withdrawAsync(playerId, "money", BigDecimal.valueOf(100)).thenAccept(response -> {
     if (response.isSuccess()) {
-        System.out.println("Withdrew successfully, new balance: " + response.getBalance());
+        System.out.println("Withdrew successfully, new balance: " + response.getBalanceExact());
     } else {
         System.out.println("Failed: " + response.getErrorMessage());
     }
@@ -202,15 +209,23 @@ economy.hasAccount(playerId).thenAccept(exists -> {
 
 ### Handling EconomyResponse
 
+The `EconomyResponse` object contains:
+- `getType()` - The response type (success/failure reason)
+- `getBalanceExact()` / `getBalance()` - The balance after the operation (BigDecimal or double)
+- `getAmountExact()` / `getAmount()` - The amount involved in the transaction (BigDecimal or double)
+- `getErrorMessage()` - Error details if the operation failed
+- `isSuccess()` - Quick check if the operation succeeded
+
 ```java
 EconomyResponse response = economy.withdraw(playerId, "money", amount);
 
 switch (response.getType()) {
     case SUCCESS:
-        System.out.println("Success! New balance: " + response.getBalance());
+        System.out.println("Success! New balance: " + response.getBalanceExact());
+        System.out.println("Amount withdrawn: " + response.getAmountExact());
         break;
     case INSUFFICIENT_FUNDS:
-        System.out.println("Not enough funds. Current balance: " + response.getBalance());
+        System.out.println("Not enough funds. Current balance: " + response.getBalanceExact());
         break;
     case PLAYER_NOT_ONLINE:
         System.out.println("Player is offline, use async method instead");
@@ -240,7 +255,9 @@ boolean exists = economy.currencyExists("money");
 String name = economy.getCurrencyDisplayName("money"); // "Money"
 
 // Format amount for display
-String formatted = economy.format(BigDecimal.valueOf(1234.56), "money"); // "$1,234.56"
+String formatted = economy.format(BigDecimal.valueOf(1234.56), "money"); // "$1234.56"
+String formatted2 = economy.format(1234.56, "money"); // Double overload
+String formatted3 = economy.format(BigDecimal.valueOf(100)); // Uses default currency
 ```
 
 ## Response Types

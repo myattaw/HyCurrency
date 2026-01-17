@@ -74,7 +74,6 @@ public class JsonStorage implements CurrencyStorage {
                 plugin.getLogger().atSevere().log("Failed to load player data for " + playerUuid + ": " + e.getMessage());
             }
         }
-        // Removed: Don't pre-add currencies here - let auto-grant handle it
         return model;
     }
 

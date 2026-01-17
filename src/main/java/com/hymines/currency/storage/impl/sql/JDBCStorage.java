@@ -204,7 +204,6 @@ public abstract class JDBCStorage implements CurrencyStorage {
                         }
                     }
                 }
-                // Removed: Don't pre-add currencies here - let auto-grant handle it
             }
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to load player data: " + e.getMessage());
