@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 public class HyCurrencyPlugin extends JavaPlugin {
 
+    private static volatile HyCurrencyPlugin instance;
+
     private final Map<String, CurrencyModel> currencyDataMap = new ConcurrentHashMap<>();
     private ExecutorService dbExecutor;
 
@@ -40,6 +42,9 @@ public class HyCurrencyPlugin extends JavaPlugin {
     @Override
     protected void setup() {
         super.setup();
+        // set static instance
+        instance = this;
+
         loadConfig();
         initializeStorage();
         getCommandRegistry().registerCommand(new CurrencyCommand(this));
@@ -62,6 +67,9 @@ public class HyCurrencyPlugin extends JavaPlugin {
                 dbExecutor.shutdownNow();
             }
         }
+
+        // clear static instance
+        instance = null;
     }
 
     private void loadConfig() {
@@ -117,8 +125,11 @@ public class HyCurrencyPlugin extends JavaPlugin {
      * @return The Economy provider for this plugin
      */
     @Nonnull
-    public Economy getEconomy() {
-        return economy;
+    public static Economy getEconomy() {
+        if (instance == null || instance.economy == null) {
+            throw new IllegalStateException("HyCurrency is not loaded");
+        }
+        return instance.economy;
     }
 
 }

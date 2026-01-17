@@ -89,8 +89,11 @@ HyCurrency provides a modern Economy API with two types of operations:
 ### Getting the Economy API
 
 ```java
+// Economy access via plugin instance
 HyCurrencyPlugin plugin = ...; // Get plugin instance
 Economy economy = plugin.getEconomy();
+
+Economy economyStatic = HyCurrencyPlugin.getEconomy();
 ```
 
 ### Sync Operations (Online Players Only)
