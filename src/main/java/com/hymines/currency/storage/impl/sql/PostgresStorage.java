@@ -69,4 +69,19 @@ public class PostgresStorage extends JDBCStorage {
     protected Function<List<String>, String> getUpdateClauseBuilder() {
         return PreparedStatementBuilder.UpsertBuilder::postgresUpdateClause;
     }
+
+    @Override
+    protected String getNameColumnType() {
+        return SqlStatements.POSTGRES_NAME_TYPE;
+    }
+
+    @Override
+    protected String getCreateNameIndexSql() {
+        return SqlStatements.CREATE_NAME_INDEX_POSTGRES;
+    }
+
+    @Override
+    protected String getAddNameColumnTemplate() {
+        return SqlStatements.ALTER_TABLE_ADD_NAME_COLUMN_IF_NOT_EXISTS;
+    }
 }

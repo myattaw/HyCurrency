@@ -40,6 +40,11 @@ public abstract class JDBCStorage implements CurrencyStorage {
     protected abstract String getPrimaryKeyType();
 
     /**
+     * Get the SQL type for the player name column.
+     */
+    protected abstract String getNameColumnType();
+
+    /**
      * Get the database-specific upsert SQL template.
      */
     protected abstract String getUpsertTemplate();
@@ -48,6 +53,16 @@ public abstract class JDBCStorage implements CurrencyStorage {
      * Get the database-specific add column SQL template.
      */
     protected abstract String getAddColumnTemplate();
+
+    /**
+     * Get the SQL statement to create the name index.
+     */
+    protected abstract String getCreateNameIndexSql();
+
+    /**
+     * Get the SQL statement to add the name column (for existing tables).
+     */
+    protected abstract String getAddNameColumnTemplate();
 
     /**
      * Get the update clause builder function for this database type.
@@ -75,6 +90,8 @@ public abstract class JDBCStorage implements CurrencyStorage {
             }
             plugin.getLogger().atInfo().log("Database connection pool initialized");
             createTableIfNotExists();
+            ensureNameColumnExists();
+            createNameIndex();
             syncCurrencyColumns();
         } catch (Exception e) {
             plugin.getLogger().atSevere().log("Failed to initialize database: " + e.getMessage());
@@ -85,13 +102,44 @@ public abstract class JDBCStorage implements CurrencyStorage {
     protected void createTableIfNotExists() {
         String sql = SqlStatements.CREATE_TABLE
                 .replace("{table}", tableName)
-                .replace("{pk_type}", getPrimaryKeyType());
+                .replace("{pk_type}", getPrimaryKeyType())
+                .replace("{name_type}", getNameColumnType());
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to create table: " + e.getMessage());
+        }
+    }
+
+    protected void ensureNameColumnExists() {
+        String sql = getAddNameColumnTemplate()
+                .replace("{table}", tableName)
+                .replace("{type}", getNameColumnType());
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (!msg.contains("duplicate") && !msg.contains("already exists")) {
+                plugin.getLogger().atFine().log("Column player_name may already exist: " + e.getMessage());
+            }
+        }
+    }
+
+    protected void createNameIndex() {
+        String sql = getCreateNameIndexSql().replace("{table}", tableName);
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            if (!msg.contains("already exists") && !msg.contains("duplicate")) {
+                plugin.getLogger().atFine().log("Name index may already exist: " + e.getMessage());
+            }
         }
     }
 
@@ -148,19 +196,18 @@ public abstract class JDBCStorage implements CurrencyStorage {
             stmt.setString(1, playerUuid);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    model.setPlayerName(rs.getString("player_name"));
                     for (String currencyId : currencyIds) {
                         BigDecimal amount = rs.getBigDecimal(sanitizeColumnName(currencyId));
                         if (amount != null) {
                             model.setCurrency(currencyId, amount);
                         }
                     }
-                } else {
-                    currencyIds.forEach(model::addCurrency);
                 }
+                // Removed: Don't pre-add currencies here - let auto-grant handle it
             }
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to load player data: " + e.getMessage());
-            currencyIds.forEach(model::addCurrency);
         }
         return model;
     }
@@ -176,6 +223,25 @@ public abstract class JDBCStorage implements CurrencyStorage {
         return CompletableFuture.runAsync(() -> save(playerId, model), plugin.getDbExecutor());
     }
 
+    private String buildUpsertSql(Collection<String> currencyIds) {
+        return PreparedStatementBuilder.upsert(tableName)
+                .withPrimaryKey("player_uuid")
+                .withPlayerName()
+                .withColumns(currencyIds, this::sanitizeColumnName)
+                .withTemplate(getUpsertTemplate())
+                .buildSql(getUpdateClauseBuilder());
+    }
+
+    private void setUpsertParameters(PreparedStatement stmt, String playerId,
+                                     CurrencyModel model) throws SQLException {
+        stmt.setString(1, playerId);
+        stmt.setString(2, model.getPlayerName());
+        int index = 3;
+        for (BigDecimal amount : model.getCurrencies().values()) {
+            stmt.setBigDecimal(index++, amount);
+        }
+    }
+
     protected void save(String playerId, CurrencyModel model) {
         if (model.getCurrencies().isEmpty()) return;
 
@@ -183,27 +249,10 @@ public abstract class JDBCStorage implements CurrencyStorage {
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            setUpsertParameters(stmt, playerId, model.getCurrencies());
+            setUpsertParameters(stmt, playerId, model);
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().atSevere().log("Failed to save player data: " + e.getMessage());
-        }
-    }
-
-    private String buildUpsertSql(Collection<String> currencyIds) {
-        return PreparedStatementBuilder.upsert(tableName)
-                .withPrimaryKey("player_uuid")
-                .withColumns(currencyIds, this::sanitizeColumnName)
-                .withTemplate(getUpsertTemplate())
-                .buildSql(getUpdateClauseBuilder());
-    }
-
-    private void setUpsertParameters(PreparedStatement stmt, String playerId,
-                                     Map<String, BigDecimal> currencies) throws SQLException {
-        stmt.setString(1, playerId);
-        int index = 2;
-        for (BigDecimal amount : currencies.values()) {
-            stmt.setBigDecimal(index++, amount);
         }
     }
 
@@ -224,7 +273,7 @@ public abstract class JDBCStorage implements CurrencyStorage {
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (Map.Entry<String, CurrencyModel> entry : allPlayersData.entrySet()) {
-                addBatchEntry(stmt, entry.getKey(), entry.getValue().getCurrencies(), currencyOrder);
+                addBatchEntry(stmt, entry.getKey(), entry.getValue(), currencyOrder);
             }
             stmt.executeBatch();
         } catch (SQLException e) {
@@ -239,14 +288,53 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     private void addBatchEntry(PreparedStatement stmt, String playerId,
-                               Map<String, BigDecimal> currencies,
+                               CurrencyModel model,
                                List<String> currencyOrder) throws SQLException {
         stmt.setString(1, playerId);
-        int index = 2;
+        stmt.setString(2, model.getPlayerName());
+        int index = 3;
         for (String currencyId : currencyOrder) {
-            stmt.setBigDecimal(index++, currencies.getOrDefault(currencyId, BigDecimal.ZERO));
+            stmt.setBigDecimal(index++, model.getCurrencies().getOrDefault(currencyId, BigDecimal.ZERO));
         }
         stmt.addBatch();
+    }
+
+    /**
+     * Look up a player's UUID by their name.
+     */
+    @Override
+    public CompletableFuture<CurrencyModel> loadByNameAsync(String playerName) {
+        return CompletableFuture.supplyAsync(() -> {
+            var currencies = plugin.getCurrencyConfig().getCurrencies();
+            if (currencies == null || currencies.isEmpty()) return null;
+
+            Set<String> currencyIds = currencies.keySet();
+            String columns = buildColumnList(currencyIds);
+            String sql = SqlStatements.SELECT_PLAYER_BY_NAME
+                    .replace("{table}", tableName)
+                    .replace("{columns}", columns);
+
+            try (Connection conn = getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, playerName.toLowerCase());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        CurrencyModel model = new CurrencyModel();
+                        model.setPlayerName(rs.getString("player_name"));
+                        for (String currencyId : currencyIds) {
+                            BigDecimal amount = rs.getBigDecimal(sanitizeColumnName(currencyId));
+                            if (amount != null) {
+                                model.setCurrency(currencyId, amount);
+                            }
+                        }
+                        return model;
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().atSevere().log("Failed to load player data by name: " + e.getMessage());
+            }
+            return null;
+        }, plugin.getDbExecutor());
     }
 
     @Override

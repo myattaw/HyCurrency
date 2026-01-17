@@ -1,5 +1,6 @@
 package com.hymines.currency.model;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,8 +8,19 @@ import java.util.Map;
 
 public class CurrencyModel {
 
+    private String playerName;
+
     // Map of currency ID to amount
     private final Map<String, BigDecimal> currencies = new HashMap<>();
+
+    @Nullable
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(@Nullable String playerName) {
+        this.playerName = playerName;
+    }
 
     public void addCurrency(String currency) {
         currencies.putIfAbsent(currency, BigDecimal.ZERO);

@@ -70,4 +70,19 @@ public class MySQLStorage extends JDBCStorage {
     protected String getAddColumnTemplate() {
         return SqlStatements.ALTER_TABLE_ADD_COLUMN;
     }
+
+    @Override
+    protected String getNameColumnType() {
+        return SqlStatements.MYSQL_NAME_TYPE;
+    }
+
+    @Override
+    protected String getCreateNameIndexSql() {
+        return SqlStatements.CREATE_NAME_INDEX_MYSQL;
+    }
+
+    @Override
+    protected String getAddNameColumnTemplate() {
+        return SqlStatements.ALTER_TABLE_ADD_NAME_COLUMN;
+    }
 }

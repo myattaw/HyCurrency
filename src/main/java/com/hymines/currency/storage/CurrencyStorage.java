@@ -2,6 +2,7 @@ package com.hymines.currency.storage;
 
 import com.hymines.currency.model.CurrencyModel;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,6 +17,15 @@ public interface CurrencyStorage {
      * Load player's currency data asynchronously
      */
     CompletableFuture<CurrencyModel> loadAsync(String playerUuid);
+
+    /**
+     * Load a player's currency data by their username.
+     * This is useful for offline players not in the cache.
+     *
+     * @param playerName The player's username (case-insensitive)
+     * @return A future containing the CurrencyModel, or null if not found
+     */
+    CompletableFuture<CurrencyModel> loadByNameAsync(String playerName);
 
     /**
      * Save player's currency data asynchronously
@@ -52,5 +62,4 @@ public interface CurrencyStorage {
      * @return A map of player names to amounts, ordered by amount (descending)
      */
     CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId, int limit);
-
 }

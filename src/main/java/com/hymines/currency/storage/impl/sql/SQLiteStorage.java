@@ -64,4 +64,18 @@ public class SQLiteStorage extends JDBCStorage {
         return PreparedStatementBuilder.UpsertBuilder::noUpdateClause;
     }
 
+    @Override
+    protected String getNameColumnType() {
+        return SqlStatements.SQLITE_NAME_TYPE;
+    }
+
+    @Override
+    protected String getCreateNameIndexSql() {
+        return SqlStatements.CREATE_NAME_INDEX_SQLITE;
+    }
+
+    @Override
+    protected String getAddNameColumnTemplate() {
+        return SqlStatements.ALTER_TABLE_ADD_NAME_COLUMN;
+    }
 }

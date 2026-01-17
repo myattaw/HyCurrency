@@ -63,11 +63,16 @@ public class CurrencyService implements Economy {
         return currencyManager.getStorage().loadAsync(playerId.toString())
                 .thenCompose(existing -> {
                     if (existing != null) {
+                        // Update player name if it wasn't set before
+                        if (existing.getPlayerName() == null && playerName != null) {
+                            existing.setPlayerName(playerName);
+                        }
                         return CompletableFuture.completedFuture(
                                 EconomyResponse.success(BigDecimal.ZERO, existing.getCurrency(getDefaultCurrency()))
                         );
                     }
                     CurrencyModel model = createDefaultModel();
+                    model.setPlayerName(playerName);
                     return currencyManager.getStorage().saveAsync(playerId.toString(), model)
                             .thenApply(v -> EconomyResponse.success(BigDecimal.ZERO, model.getCurrency(getDefaultCurrency())));
                 })

@@ -10,16 +10,24 @@ package com.hymines.currency.storage.sql;
 public final class SqlStatements {
 
     // Table creation
-    public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS {table} (player_uuid {pk_type} PRIMARY KEY)";
+    public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS {table} (player_uuid {pk_type} PRIMARY KEY, player_name {name_type})";
+
+    // Index creation
+    public static final String CREATE_NAME_INDEX_MYSQL = "CREATE INDEX IF NOT EXISTS idx_player_name ON {table} (player_name)";
+    public static final String CREATE_NAME_INDEX_POSTGRES = "CREATE INDEX IF NOT EXISTS idx_player_name ON {table} (player_name)";
+    public static final String CREATE_NAME_INDEX_SQLITE = "CREATE INDEX IF NOT EXISTS idx_player_name ON {table} (player_name)";
 
     // Column operations
     public static final String ALTER_TABLE_ADD_COLUMN = "ALTER TABLE {table} ADD COLUMN {column} {type} DEFAULT 0";
     public static final String ALTER_TABLE_ADD_COLUMN_IF_NOT_EXISTS = "ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {type} DEFAULT 0";
     public static final String ALTER_TABLE_DROP_COLUMN = "ALTER TABLE {table} DROP COLUMN {column}";
+    public static final String ALTER_TABLE_ADD_NAME_COLUMN = "ALTER TABLE {table} ADD COLUMN player_name {type}";
+    public static final String ALTER_TABLE_ADD_NAME_COLUMN_IF_NOT_EXISTS = "ALTER TABLE {table} ADD COLUMN IF NOT EXISTS player_name {type}";
 
     // Select queries
-    public static final String SELECT_PLAYER_CURRENCIES = "SELECT {columns} FROM {table} WHERE player_uuid = ?";
-    public static final String SELECT_TOP_BALANCES = "SELECT player_uuid, {column} FROM {table} ORDER BY {column} DESC LIMIT ?";
+    public static final String SELECT_PLAYER_CURRENCIES = "SELECT player_name, {columns} FROM {table} WHERE player_uuid = ?";
+    public static final String SELECT_TOP_BALANCES = "SELECT player_uuid, player_name, {column} FROM {table} ORDER BY {column} DESC LIMIT ?";
+    public static final String SELECT_PLAYER_BY_NAME = "SELECT player_uuid, player_name, {columns} FROM {table} WHERE player_name = ?";
 
     // Upsert queries (database-specific)
     public static final String UPSERT_MYSQL = "INSERT INTO {table} ({columns}) VALUES ({values}) ON DUPLICATE KEY UPDATE {updates}";
@@ -39,10 +47,12 @@ public final class SqlStatements {
     // Column types
     public static final String MYSQL_CURRENCY_TYPE = "DECIMAL(19,4)";
     public static final String MYSQL_PK_TYPE = "VARCHAR(36)";
+    public static final String MYSQL_NAME_TYPE = "VARCHAR(32)";
     public static final String POSTGRES_CURRENCY_TYPE = "DECIMAL(19,4)";
     public static final String POSTGRES_PK_TYPE = "VARCHAR(36)";
+    public static final String POSTGRES_NAME_TYPE = "VARCHAR(32)";
     public static final String SQLITE_CURRENCY_TYPE = "REAL";
     public static final String SQLITE_PK_TYPE = "TEXT";
+    public static final String SQLITE_NAME_TYPE = "TEXT";
 
 }
-

@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -72,21 +73,20 @@ public class JsonStorage implements CurrencyStorage {
             } catch (IOException e) {
                 plugin.getLogger().atSevere().log("Failed to load player data for " + playerUuid + ": " + e.getMessage());
             }
-        } else {
-            // Initialize with default currencies
-            var currencies = plugin.getCurrencyConfig().getCurrencies();
-            if (currencies != null) {
-                for (String currencyId : currencies.keySet()) {
-                    model.addCurrency(currencyId);
-                }
-            }
         }
+        // Removed: Don't pre-add currencies here - let auto-grant handle it
         return model;
     }
 
     @Override
     public CompletableFuture<Void> saveAsync(String playerId, CurrencyModel model) {
         return CompletableFuture.runAsync(() -> save(playerId, model), plugin.getDbExecutor());
+    }
+
+    @Override
+    public CompletableFuture<CurrencyModel> loadByNameAsync(String playerName) {
+        // JSON storage does not support loading by name efficiently
+        return CompletableFuture.completedFuture(null);
     }
 
     private void save(String playerId, CurrencyModel model) {
@@ -132,6 +132,8 @@ public class JsonStorage implements CurrencyStorage {
         }
     }
 
+
+
     @Override
     public void unload() {
         saveAll();
@@ -159,4 +161,3 @@ public class JsonStorage implements CurrencyStorage {
     }
 
 }
-

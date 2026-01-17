@@ -9,7 +9,6 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 
@@ -33,24 +32,46 @@ public class CurrencyBalanceOtherVariant extends AbstractCommand {
     @Nullable
     @Override
     protected CompletableFuture<Void> execute(@Nonnull CommandContext ctx) {
-        PlayerRef target = Universe.get().getPlayerByUsername(playerArg.get(ctx), NameMatching.EXACT_IGNORE_CASE);
-
-        if (target == null) {
-            ctx.sendMessage(Message.raw("Player not found."));
-            return CompletableFuture.completedFuture(null);
-        }
+        String targetName = playerArg.get(ctx);
+        PlayerRef target = Universe.get().getPlayerByUsername(targetName, NameMatching.EXACT_IGNORE_CASE);
 
         PlayerRef selfRef = Universe.get().getPlayer(ctx.sender().getUuid());
-        boolean isSelf = selfRef != null && target.getUuid().equals(selfRef.getUuid());
 
-        // Reuse same logic (copy minimal to avoid making outer method static)
-        CurrencyModel model = plugin.getCurrencyDataMap().get(target.getUuid().toString());
-        if (model == null || model.getCurrencies().isEmpty()) {
-            ctx.sendMessage(Message.raw(isSelf ? "You have no currencies." : target.getUsername() + " has no currencies."));
+        // If player is online, use cached data
+        if (target != null) {
+            boolean isSelf = selfRef != null && target.getUuid().equals(selfRef.getUuid());
+            CurrencyModel model = plugin.getCurrencyDataMap().get(target.getUuid().toString());
+
+            if (model == null || model.getCurrencies().isEmpty()) {
+                ctx.sendMessage(Message.raw(isSelf ? "You have no currencies." : target.getUsername() + " has no currencies."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            sendBalanceMessage(ctx, target.getUsername(), model, isSelf);
             return CompletableFuture.completedFuture(null);
         }
 
-        String header = isSelf ? "Your balances:" : target.getUsername() + "'s balances:";
+        // Player is offline - load from database by name
+        return plugin.getCurrencyManager().getStorage().loadByNameAsync(targetName)
+                .thenAccept(model -> {
+                    if (model == null) {
+                        ctx.sendMessage(Message.raw("Player not found."));
+                        return;
+                    }
+
+                    if (model.getCurrencies().isEmpty()) {
+                        String displayName = model.getPlayerName() != null ? model.getPlayerName() : targetName;
+                        ctx.sendMessage(Message.raw(displayName + " has no currencies."));
+                        return;
+                    }
+
+                    String displayName = model.getPlayerName() != null ? model.getPlayerName() : targetName;
+                    sendBalanceMessage(ctx, displayName, model, false);
+                });
+    }
+
+    private void sendBalanceMessage(CommandContext ctx, String playerName, CurrencyModel model, boolean isSelf) {
+        String header = isSelf ? "Your balances:" : playerName + "'s balances:";
         String body = model.getCurrencies().entrySet().stream()
                 .map(e -> {
                     String currencyId = e.getKey();
@@ -64,7 +85,6 @@ public class CurrencyBalanceOtherVariant extends AbstractCommand {
                 .collect(Collectors.joining("\n"));
 
         ctx.sendMessage(Message.raw(header + "\n" + body));
-        return CompletableFuture.completedFuture(null);
     }
 
 }

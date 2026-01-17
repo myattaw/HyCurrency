@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Builder for creating and executing prepared statements with dynamic columns.
@@ -101,62 +102,71 @@ public class PreparedStatementBuilder {
     public static class UpsertBuilder {
 
         private final String tableName;
+        private String primaryKey;
+        private boolean includePlayerName = false;
         private final List<String> columns = new ArrayList<>();
-        private String upsertTemplate;
+        private String template;
 
         private UpsertBuilder(String tableName) {
             this.tableName = tableName;
         }
 
-        public UpsertBuilder withPrimaryKey(String pkColumn) {
-            if (columns.isEmpty()) {
-                columns.add(pkColumn);
-            }
+        public UpsertBuilder withPrimaryKey(String primaryKey) {
+            this.primaryKey = primaryKey;
             return this;
         }
 
-        public UpsertBuilder withColumns(Collection<String> currencyIds, Function<String, String> columnNameMapper) {
-            for (String id : currencyIds) {
-                columns.add(columnNameMapper.apply(id));
-            }
+        public UpsertBuilder withPlayerName() {
+            this.includePlayerName = true;
+            return this;
+        }
+
+        public UpsertBuilder withColumns(Collection<String> currencyIds, Function<String, String> sanitizer) {
+            currencyIds.forEach(id -> columns.add(sanitizer.apply(id)));
             return this;
         }
 
         public UpsertBuilder withTemplate(String template) {
-            this.upsertTemplate = template;
+            this.template = template;
             return this;
         }
 
         public String buildSql(Function<List<String>, String> updateClauseBuilder) {
-            String columnList = String.join(", ", columns);
-            String placeholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
-            String updates = updateClauseBuilder.apply(columns);
+            List<String> allColumns = new ArrayList<>();
+            allColumns.add(primaryKey);
+            if (includePlayerName) {
+                allColumns.add("player_name");
+            }
+            allColumns.addAll(columns);
 
-            return upsertTemplate.replace("{table}", tableName).replace("{columns}", columnList).replace("{values}", placeholders).replace("{updates}", updates);
-        }
+            String columnList = String.join(", ", allColumns);
+            String placeholders = String.join(", ", Collections.nCopies(allColumns.size(), "?"));
 
-        public List<String> getColumns() {
-            return columns;
+            // Build update columns list (excludes primary key, includes player_name first)
+            List<String> updateColumns = new ArrayList<>();
+            if (includePlayerName) {
+                updateColumns.add("player_name");
+            }
+            updateColumns.addAll(columns);
+            String updates = updateClauseBuilder.apply(updateColumns);
+
+            return template
+                    .replace("{table}", tableName)
+                    .replace("{columns}", columnList)
+                    .replace("{values}", placeholders)
+                    .replace("{updates}", updates);
         }
 
         public static String mysqlUpdateClause(List<String> columns) {
-            StringBuilder updates = new StringBuilder();
-            for (int i = 1; i < columns.size(); i++) {
-                if (!updates.isEmpty()) updates.append(", ");
-                String col = columns.get(i);
-                updates.append(col).append(" = VALUES(").append(col).append(")");
-            }
-            return updates.toString();
+            return columns.stream()
+                    .map(col -> col + " = VALUES(" + col + ")")
+                    .collect(Collectors.joining(", "));
         }
 
         public static String postgresUpdateClause(List<String> columns) {
-            StringBuilder updates = new StringBuilder();
-            for (int i = 1; i < columns.size(); i++) {
-                if (!updates.isEmpty()) updates.append(", ");
-                String col = columns.get(i);
-                updates.append(col).append(" = EXCLUDED.").append(col);
-            }
-            return updates.toString();
+            return columns.stream()
+                    .map(col -> col + " = EXCLUDED." + col)
+                    .collect(Collectors.joining(", "));
         }
 
         public static String noUpdateClause(List<String> columns) {
