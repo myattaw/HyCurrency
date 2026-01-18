@@ -1,5 +1,6 @@
 package com.hymines.currency;
 
+import com.hymines.currency.api.EconomyProviderRegistry;
 import com.hymines.currency.service.CurrencyService;
 import com.hymines.currency.api.Economy;
 import com.hymines.currency.command.CurrencyCommand;
@@ -47,8 +48,17 @@ public class HyCurrencyPlugin extends JavaPlugin {
 
         loadConfig();
         initializeStorage();
+
         getCommandRegistry().registerCommand(new CurrencyCommand(this));
         PlayerCurrencyHandler.register(this);
+
+        // Register Economy provider for other plugins
+        if (this.economy == null) {
+            throw new IllegalStateException("Economy failed to initialize in HyCurrency");
+        }
+        EconomyProviderRegistry.register(this.economy);
+
+        getLogger().atInfo().log("HyCurrency economy registered");
     }
 
     @Override
@@ -96,7 +106,7 @@ public class HyCurrencyPlugin extends JavaPlugin {
         this.dbExecutor = Executors.newFixedThreadPool(pluginConfig.getStorageThreads());
         StorageFactory storageFactory = new StorageFactory(this, pluginConfig);
         this.currencyManager = new CurrencyManager(this, storageFactory.createAndInitialize());
-        this.economy = new CurrencyService(this, currencyManager);
+        economy = new CurrencyService(this, currencyManager);
     }
 
     public PluginConfig getPluginConfig() {
@@ -119,17 +129,9 @@ public class HyCurrencyPlugin extends JavaPlugin {
         return currencyManager;
     }
 
-    /**
-     * Gets the Economy API implementation.
-     *
-     * @return The Economy provider for this plugin
-     */
     @Nonnull
     public static Economy getEconomy() {
-        if (instance == null || instance.economy == null) {
-            throw new IllegalStateException("HyCurrency is not loaded");
-        }
-        return instance.economy;
+        return EconomyProviderRegistry.get();
     }
 
 }
