@@ -83,7 +83,7 @@ public class EconomyResponse {
 
     private static double toSafeDouble(BigDecimal value) {
         double d = value.doubleValue();
-        if (new BigDecimal(d).compareTo(value) > 0) {
+        if (BigDecimal.valueOf(d).compareTo(value) > 0) {
             d = Math.nextAfter(d, Double.NEGATIVE_INFINITY);
         }
         return d;

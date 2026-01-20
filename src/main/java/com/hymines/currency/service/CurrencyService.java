@@ -3,10 +3,16 @@ package com.hymines.currency.service;
 import com.hymines.currency.HyCurrencyPlugin;
 import com.hymines.currency.api.Economy;
 import com.hymines.currency.api.EconomyResponse;
+import com.hymines.currency.api.event.PlayerCurrencyChangeEvent;
 import com.hymines.currency.config.CurrencyConfig;
 import com.hymines.currency.model.CurrencyManager;
 import com.hymines.currency.model.CurrencyMetadata;
 import com.hymines.currency.model.CurrencyModel;
+import com.hypixel.hytale.event.IEventDispatcher;
+import com.hypixel.hytale.server.core.HytaleServer;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
@@ -154,7 +160,19 @@ public class CurrencyService implements Economy {
             return EconomyResponse.insufficientFunds(balance);
         }
         BigDecimal newBalance = balance.subtract(amount);
+
+        HytaleServer.get()
+                .getEventBus()
+                .dispatchFor(PlayerCurrencyChangeEvent.class)
+                .dispatch(new PlayerCurrencyChangeEvent(
+                        playerId,
+                        currency,
+                        balance,
+                        newBalance
+                ));
+
         model.setCurrency(currency, newBalance);
+
         return EconomyResponse.success(amount, newBalance);
     }
 
@@ -173,6 +191,17 @@ public class CurrencyService implements Economy {
         CurrencyModel model = getOnlinePlayerModel(playerId);
         BigDecimal balance = model.getCurrency(currency);
         BigDecimal newBalance = balance.add(amount);
+
+        HytaleServer.get()
+                .getEventBus()
+                .dispatchFor(PlayerCurrencyChangeEvent.class)
+                .dispatch(new PlayerCurrencyChangeEvent(
+                        playerId,
+                        currency,
+                        balance,
+                        newBalance
+                ));
+
         model.setCurrency(currency, newBalance);
         return EconomyResponse.success(amount, newBalance);
     }
@@ -189,7 +218,21 @@ public class CurrencyService implements Economy {
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             return EconomyResponse.invalidAmount();
         }
+
+
         CurrencyModel model = getOnlinePlayerModel(playerId);
+        BigDecimal oldBalance = model.getCurrency(currency);
+
+        HytaleServer.get()
+                .getEventBus()
+                .dispatchFor(PlayerCurrencyChangeEvent.class)
+                .dispatch(new PlayerCurrencyChangeEvent(
+                        playerId,
+                        currency,
+                        oldBalance,
+                        amount
+                ));
+
         model.setCurrency(currency, amount);
         return EconomyResponse.success(amount, amount);
     }
