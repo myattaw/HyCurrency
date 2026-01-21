@@ -1,14 +1,32 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Michael Yattaw
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * See the LICENSE file in the project root for full license information.
+ */
+
 package com.hymines.currency;
 
-import com.hymines.currency.api.EconomyProviderRegistry;
-import com.hymines.currency.service.CurrencyService;
 import com.hymines.currency.api.Economy;
+import com.hymines.currency.api.EconomyProviderRegistry;
 import com.hymines.currency.command.CurrencyCommand;
-import com.hymines.currency.config.PluginConfig;
 import com.hymines.currency.config.CurrencyConfig;
+import com.hymines.currency.config.PluginConfig;
 import com.hymines.currency.listener.PlayerCurrencyHandler;
 import com.hymines.currency.model.CurrencyManager;
 import com.hymines.currency.model.CurrencyModel;
+import com.hymines.currency.service.CurrencyService;
 import com.hymines.currency.storage.StorageFactory;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
@@ -135,3 +153,4 @@ public class HyCurrencyPlugin extends JavaPlugin {
     }
 
 }
+
