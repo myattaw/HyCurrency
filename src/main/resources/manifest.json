@@ -1,5 +1,5 @@
 {
-  "Group": "Hymines",
+  "Group": "ReliablePlugins",
   "Name": "HyCurrency",
   "Version": "1.0.0",
   "Authors": [
@@ -10,6 +10,6 @@
   ],
   "Website": "https://github.com/myattaw/",
   "Description": "HyCurrency is a plugin that introduces a customizable in-game currency system.",
-  "Main": "com.hymines.currency.HyCurrencyPlugin",
+  "Main": "com.reliableplugins.currency.HyCurrencyPlugin",
   "ServerVersion": "*"
 }

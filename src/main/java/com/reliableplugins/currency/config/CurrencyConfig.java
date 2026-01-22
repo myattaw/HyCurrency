@@ -1,0 +1,99 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Michael Yattaw
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * See the LICENSE file in the project root for full license information.
+ */
+
+package com.reliableplugins.currency.config;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.reliableplugins.currency.model.CurrencyMetadata;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class CurrencyConfig {
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    // Preserve insertion order for predictable JSON output
+    private Map<String, CurrencyMetadata> currencies = new LinkedHashMap<>();
+
+    public CurrencyConfig() {
+    }
+
+    public Map<String, CurrencyMetadata> getCurrencies() {
+        return currencies;
+    }
+
+    public CurrencyMetadata getCurrency(String id) {
+        return currencies.get(id);
+    }
+
+    // Load currency.json from plugin data folder; if missing, copy default from resources
+    public static CurrencyConfig load(Path dataFolder) throws IOException {
+        Path configFile = dataFolder.resolve("currency.json");
+
+        if (!Files.exists(configFile)) {
+            Files.createDirectories(dataFolder);
+            // Try copying default resource
+            try (InputStream in = CurrencyConfig.class.getClassLoader().getResourceAsStream("currency.json")) {
+                if (in != null) {
+                    Files.copy(in, configFile);
+                } else {
+                    // Create a programmatic default if resource not found
+                    CurrencyConfig defaultCfg = createDefault();
+                    try (Writer writer = Files.newBufferedWriter(configFile)) {
+                        GSON.toJson(defaultCfg, writer);
+                    }
+                }
+            }
+        }
+
+        try (Reader reader = Files.newBufferedReader(configFile)) {
+            CurrencyConfig cfg = GSON.fromJson(reader, CurrencyConfig.class);
+            if (cfg == null) {
+                // fallback to empty/default
+                cfg = createDefault();
+            }
+            return cfg;
+        }
+    }
+
+    public void save(Path dataFolder) throws IOException {
+        Path configFile = dataFolder.resolve("currency.json");
+        Files.createDirectories(dataFolder);
+        try (Writer writer = Files.newBufferedWriter(configFile)) {
+            GSON.toJson(this, writer);
+        }
+    }
+
+    private static CurrencyConfig createDefault() {
+        CurrencyConfig cfg = new CurrencyConfig();
+        cfg.currencies.put("money", new CurrencyMetadata("money", "Money", "$", "%symbol%%amount%", true, true, BigDecimal.ZERO));
+        cfg.currencies.put("vote_points", new CurrencyMetadata("vote_points", "Vote Points", "FP", "%amount% %symbol%", false, false, BigDecimal.ZERO));
+        return cfg;
+    }
+
+}
+
