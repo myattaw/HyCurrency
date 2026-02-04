@@ -30,8 +30,7 @@ import com.hypixel.hytale.server.core.HytaleServer;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CurrencyService implements Economy {
@@ -472,6 +471,35 @@ public class CurrencyService implements Economy {
                 })
                 .exceptionally(ex -> EconomyResponse.internalError(ex.getMessage()));
     }
+
+    @Override
+    @Nonnull
+    public Map<UUID, BigDecimal> getTopBalances(@Nonnull String currency) {
+        if (!currencyExists(currency)) {
+            return Map.of();
+        }
+
+        Map<UUID, BigDecimal> result = new HashMap<>();
+
+        for (Map.Entry<String, CurrencyModel> entry : plugin.getCurrencyDataMap().entrySet()) {
+            BigDecimal amount = entry.getValue().getCurrency(currency);
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                try {
+                    result.put(UUID.fromString(entry.getKey()), amount);
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
+
+        return result.entrySet()
+                .stream()
+                .sorted(Map.Entry.<UUID, BigDecimal>comparingByValue().reversed())
+                .collect(
+                        LinkedHashMap::new,
+                        (m, e) -> m.put(e.getKey(), e.getValue()),
+                        LinkedHashMap::putAll
+                );
+    }
+
 
 }
 

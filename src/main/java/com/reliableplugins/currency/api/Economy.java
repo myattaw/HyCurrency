@@ -20,6 +20,8 @@ package com.reliableplugins.currency.api;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -665,5 +667,23 @@ public interface Economy {
     default CompletableFuture<EconomyResponse> transferAsync(@Nonnull UUID fromId, @Nonnull UUID toId, double amount) {
         return transferAsync(fromId, toId, getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
+
+    /**
+     * Gets the top balances for a currency from currently cached players.
+     * <p>
+     * This only includes online players.
+     *
+     * @param currency The currency identifier
+     * @return Map of player UUID to balance, sorted descending
+     */
+    @Nonnull
+    Map<UUID, BigDecimal> getTopBalances(@Nonnull String currency);
+
+    @Nonnull
+    default Map<UUID, BigDecimal> getTopBalances() {
+        return getTopBalances(getDefaultCurrency());
+    }
+
+
 }
 
