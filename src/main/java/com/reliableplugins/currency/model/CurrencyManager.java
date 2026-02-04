@@ -31,8 +31,7 @@ public class CurrencyManager {
     private final HyCurrencyPlugin plugin;
     private final CurrencyStorage storage;
 
-    // Cache for leaderboards - Map of currency ID to leaderboard entries (player UUID to amount)
-    private final Map<String, Map<String, Integer>> leaderboardCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, BigDecimal>> leaderboardCache = new ConcurrentHashMap<>();
     private static final int DEFAULT_LEADERBOARD_LIMIT = 1000;
 
     public CurrencyManager(HyCurrencyPlugin plugin, CurrencyStorage storage) {
@@ -83,11 +82,11 @@ public class CurrencyManager {
         return getBalance(playerUuid, currencyId).compareTo(amount) >= 0;
     }
 
-    public CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId) {
+    public CompletableFuture<Map<String, BigDecimal>> getTopBalances(String currencyId) {
         return getTopBalances(currencyId, DEFAULT_LEADERBOARD_LIMIT);
     }
 
-    public CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId, int limit) {
+    public CompletableFuture<Map<String, BigDecimal>> getTopBalances(String currencyId, int limit) {
         return storage.getTopBalances(currencyId, limit)
                 .thenApply(results -> {
                     leaderboardCache.put(currencyId, results);
@@ -95,7 +94,7 @@ public class CurrencyManager {
                 });
     }
 
-    public Map<String, Integer> getCachedLeaderboard(String currencyId) {
+    public Map<String, BigDecimal> getCachedLeaderboard(String currencyId) {
         return leaderboardCache.get(currencyId);
     }
 
@@ -103,4 +102,3 @@ public class CurrencyManager {
         storage.unload();
     }
 }
-

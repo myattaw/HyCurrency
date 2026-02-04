@@ -684,6 +684,48 @@ public interface Economy {
         return getTopBalances(getDefaultCurrency());
     }
 
+    /**
+     * Gets the top balances for a currency from all players (online and offline).
+     * <p>
+     * This queries the database and includes all players.
+     *
+     * @param currency The currency identifier
+     * @param limit    Maximum number of results to return
+     * @return CompletableFuture resolving to a map of player name to balance, sorted descending
+     */
+    @Nonnull
+    CompletableFuture<Map<String, BigDecimal>> getTopBalancesAsync(@Nonnull String currency, int limit);
+
+    /**
+     * Gets the top balances for a currency from all players with default limit of 10.
+     *
+     * @param currency The currency identifier
+     * @return CompletableFuture resolving to a map of player name to balance, sorted descending
+     */
+    @Nonnull
+    default CompletableFuture<Map<String, BigDecimal>> getTopBalancesAsync(@Nonnull String currency) {
+        return getTopBalancesAsync(currency, 10);
+    }
+
+    /**
+     * Gets the top balances for the default currency from all players.
+     *
+     * @param limit Maximum number of results to return
+     * @return CompletableFuture resolving to a map of player name to balance, sorted descending
+     */
+    @Nonnull
+    default CompletableFuture<Map<String, BigDecimal>> getTopBalancesAsync(int limit) {
+        return getTopBalancesAsync(getDefaultCurrency(), limit);
+    }
+
+    /**
+     * Gets the top balances for the default currency with default limit of 10.
+     *
+     * @return CompletableFuture resolving to a map of player name to balance, sorted descending
+     */
+    @Nonnull
+    default CompletableFuture<Map<String, BigDecimal>> getTopBalancesAsync() {
+        return getTopBalancesAsync(getDefaultCurrency(), 10);
+    }
 
 }
-

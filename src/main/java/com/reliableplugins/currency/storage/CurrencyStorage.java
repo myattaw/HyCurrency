@@ -20,6 +20,7 @@ package com.reliableplugins.currency.storage;
 
 import com.reliableplugins.currency.model.CurrencyModel;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -78,6 +79,6 @@ public interface CurrencyStorage {
      * @param limit      maximum number of results
      * @return A map of player names to amounts, ordered by amount (descending)
      */
-    CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId, int limit);
-}
+    CompletableFuture<Map<String, BigDecimal>> getTopBalances(String currencyId, int limit);
 
+}

@@ -157,7 +157,7 @@ public class JsonStorage implements CurrencyStorage {
     }
 
     @Override
-    public CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId, int limit) {
+    public CompletableFuture<Map<String, BigDecimal>> getTopBalances(String currencyId, int limit) {
         return CompletableFuture.supplyAsync(() -> {
             // First, load all player files to ensure cache is complete
             try {
@@ -172,9 +172,17 @@ public class JsonStorage implements CurrencyStorage {
             }
 
             // Sort and return top balances
-            return dataCache.entrySet().stream().filter(e -> e.getValue().containsKey(currencyId)).sorted((a, b) -> b.getValue().get(currencyId).compareTo(a.getValue().get(currencyId))).limit(limit).collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(currencyId).intValue(), (a, b) -> a, LinkedHashMap::new));
+            return dataCache.entrySet().stream()
+                    .filter(e -> e.getValue().containsKey(currencyId))
+                    .sorted((a, b) -> b.getValue().get(currencyId).compareTo(a.getValue().get(currencyId)))
+                    .limit(limit)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().get(currencyId),
+                            (a, b) -> a,
+                            LinkedHashMap::new
+                    ));
         }, plugin.getDbExecutor());
     }
 
 }
-

@@ -500,6 +500,14 @@ public class CurrencyService implements Economy {
                 );
     }
 
+    @Nonnull
+    @Override
+    public CompletableFuture<Map<String, BigDecimal>> getTopBalancesAsync(@Nonnull String currency, int limit) {
+        if (!currencyExists(currency)) {
+            return CompletableFuture.completedFuture(Map.of());
+        }
+        return currencyManager.getStorage().getTopBalances(currency, limit);
+    }
 
 }
 

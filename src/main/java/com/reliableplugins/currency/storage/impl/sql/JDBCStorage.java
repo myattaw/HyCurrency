@@ -385,20 +385,22 @@ public abstract class JDBCStorage implements CurrencyStorage {
     }
 
     @Override
-    public CompletableFuture<Map<String, Integer>> getTopBalances(String currencyId, int limit) {
+    public CompletableFuture<Map<String, BigDecimal>> getTopBalances(String currencyId, int limit) {
         return CompletableFuture.supplyAsync(() -> {
-            Map<String, Integer> results = new LinkedHashMap<>();
-            String columnName = sanitizeColumnName(currencyId);
-            String sql = SqlStatements.SELECT_TOP_BALANCES
-                    .replace("{table}", tableName)
-                    .replace("{column}", columnName);
+            Map<String, BigDecimal> results = new LinkedHashMap<>();
+            String sql = String.format(SqlStatements.SELECT_TOP_BALANCES, currencyId, currencyId);
 
-            try (Connection conn = getConnection();
+            try (Connection conn = connectionPool.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, limit);
+
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        results.put(rs.getString("player_uuid"), rs.getBigDecimal(columnName).intValue());
+                        String playerName = rs.getString("player_name");
+                        BigDecimal amount = rs.getBigDecimal(currencyId);
+                        if (playerName != null && amount != null) {
+                            results.put(playerName, amount);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -408,4 +410,3 @@ public abstract class JDBCStorage implements CurrencyStorage {
         }, plugin.getDbExecutor());
     }
 }
-
